@@ -25,7 +25,7 @@ const statusStyles: Record<string, { label: string; className: string; icon: any
 
 export default function UserDashboardClient() {
   return (
-    <DashboardShell title="Buyer Dashboard" role="buyer" groups={buyerNav}>
+    <DashboardShell title="Buyer Dashboard" role="buyer">
       <div className="space-y-6">
 
         {/* Header */}
