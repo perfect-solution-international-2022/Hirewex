@@ -80,16 +80,16 @@ export default async function MyProjectsPage() {
                             {job.status.charAt(0).toUpperCase() + job.status.slice(1).replace('_', ' ')}
                           </span>
                           
-                          {job.category && (
-                            <span className="text-[10px] uppercase tracking-wider font-semibold bg-muted px-2 py-0.5 rounded text-muted-foreground">
-                              {job.category}
+                          {(job as any).category && (
+                            <span className="text-[10px] uppercase tracking-wider font-semibold">
+                              {(job as any).category}
                             </span>
                           )}
                         </div>
 
-                        {job.skills && (
+                       {(job as any).skills && (
                           <div className="flex flex-wrap gap-2">
-                            {job.skills.split(",").map((skill, idx) => (
+                            {((job as any).skills).split(",").map((skill: any, idx: number) => (
                               <span key={idx} className="text-xs bg-primary/5 text-primary px-2 py-1 rounded border border-primary/10">
                                 {skill.trim()}
                               </span>
