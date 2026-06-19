@@ -1,0 +1,21 @@
+"use server";
+
+import { db } from "@/lib/db";
+import { categories } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+
+export async function createCategory(name: string, slug: string) {
+  await db.insert(categories).values({ name, slug });
+  revalidatePath("/admin/categories");
+}
+
+export async function updateCategory(id: string, name: string, slug: string) {
+  await db.update(categories).set({ name, slug }).where(eq(categories.id, id));
+  revalidatePath("/admin/categories");
+}
+
+export async function deleteCategory(id: string) {
+  await db.delete(categories).where(eq(categories.id, id));
+  revalidatePath("/admin/categories");
+}
