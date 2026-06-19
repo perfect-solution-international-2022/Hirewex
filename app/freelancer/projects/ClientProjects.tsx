@@ -100,7 +100,7 @@ export default function ClientProjects({ services }: { services: any[] }) {
   const notice = TAB_NOTICE[activeTab];
 
   return (
-    <DashboardShell title="Services" groups={freelancerNav} role="freelancer">
+    <DashboardShell title="Services" role="freelancer">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 relative">
 
         {/* Header */}
