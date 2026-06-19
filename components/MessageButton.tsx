@@ -25,7 +25,7 @@ export function MessageButton({
 
   const handleMessage = async () => {
    // Inside MessageButton.tsx -> handleMessage()
-const result = await createOrGetConversation(targetUserId, targetRole, serviceId || jobId, serviceId ? "service" : jobId ? "job" : undefined);
+const result = await createOrGetConversation(targetUserId, targetRole, serviceId || jobId) as any;
 
 if (result?.conversationId) {
   const contextParam = serviceId ? `serviceId=${serviceId}` : jobId ? `jobId=${jobId}` : "";
