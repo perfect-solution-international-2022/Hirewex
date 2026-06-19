@@ -37,7 +37,7 @@ export default function ProfilePage() {
   const [rawImage, setRawImage] = useState<string | null>(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const editorRef = useRef<AvatarEditor>(null);
+  const editorRef = useRef<any>(null);
 
   // --- PORTFOLIO PDF STATES ---
   const [portfolioUrl, setPortfolioUrl] = useState<string | null>(null);
