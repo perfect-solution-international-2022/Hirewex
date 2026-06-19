@@ -245,7 +245,7 @@ export default function ProfilePage() {
 
   if (status === "loading" || (USER_ID && isLoadingProfile)) {
     return (
-      <DashboardShell title="Profile" groups={freelancerNav} role="freelancer">
+      <DashboardShell title="Profile" role="freelancer">
         <div className="flex min-h-[50vh] w-full flex-col items-center justify-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">Loading profile...</p>
@@ -255,7 +255,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <DashboardShell title="Profile" groups={freelancerNav} role="freelancer">
+   <DashboardShell title="Profile" role="freelancer">
       {bottomToast && <div className="fixed bottom-4 right-4 z-50 rounded-md bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg animate-in slide-in-from-bottom-5">Link copied to clipboard!</div>}
       {topToastMsg && <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-lg animate-in slide-in-from-top-4 fade-in">{topToastMsg}</div>}
 
@@ -270,7 +270,7 @@ export default function ProfilePage() {
               </div>
               
               <div className="flex flex-col items-center gap-6">
-                <div className="rounded-full overflow-hidden border-2 border-primary/20">
+                <div className="cursor-move rounded-full overflow-hidden border-2 border-primary/20">
                   <AvatarEditor
                     ref={editorRef}
                     image={rawImage}
@@ -281,7 +281,6 @@ export default function ProfilePage() {
                     scale={zoom}
                     rotate={0}
                     borderRadius={150}
-                    className="cursor-move"
                   />
                 </div>
 

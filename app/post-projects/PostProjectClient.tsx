@@ -353,7 +353,7 @@ export default function PostProjectClient({ dbCategories }: { dbCategories: Cate
                     </div>
                   )}
 
-                  <Button type="submit" size="lg" className="w-full h-12 text-base" disabled={isPending || status === "loading"}>
+                  <Button type="submit" size="lg" className="w-full h-12 text-base" disabled={isPending}>
                     {isPending ? (
                       <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Posting...</>
                     ) : (
