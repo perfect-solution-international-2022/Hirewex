@@ -6,12 +6,12 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function createService(name: string, slug: string) {
-  await db.insert(freelancerServices).values({ name, slug });
+  await db.insert(freelancerServices).values({title: name, slug });
   revalidatePath("/admin/services");
 }
 
 export async function updateService(id: string, name: string, slug: string) {
-  await db.update(freelancerServices).set({ name, slug }).where(eq(freelancerServices.id, id));
+  await db.update(freelancerServices).set({ title: name, slug }).where(eq(freelancerServices.id, id));
   revalidatePath("/admin/services");
 }
 
