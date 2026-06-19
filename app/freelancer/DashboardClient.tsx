@@ -36,10 +36,10 @@ const weeklyActivityData = [
 ];
 
 const recentActivity = [
-  { id: 1, title: "E-commerce website redesign", client: "Nimal Perera", status: "completed", amount: "LKR 45,000", date: "2 hours ago" },
-  { id: 2, title: "Mobile app UI/UX consultation", client: "TechVantage Lanka", status: "in_progress", amount: "LKR 28,500", date: "Yesterday" },
-  { id: 3, title: "Logo & brand identity package", client: "Coastal Brews Co.", status: "pending", amount: "LKR 15,000", date: "2 days ago" },
-  { id: 4, title: "WordPress maintenance retainer", client: "Sanjeewa Fonseka", status: "completed", amount: "LKR 8,000", date: "3 days ago" },
+  { id: 1, title: "E-commerce website redesign", client: "Nimal Perera", status: "completed", amount: "USD 45,000", date: "2 hours ago" },
+  { id: 2, title: "Mobile app UI/UX consultation", client: "TechVantage Lanka", status: "in_progress", amount: "USD 28,500", date: "Yesterday" },
+  { id: 3, title: "Logo & brand identity package", client: "Coastal Brews Co.", status: "pending", amount: "USD 15,000", date: "2 days ago" },
+  { id: 4, title: "WordPress maintenance retainer", client: "Sanjeewa Fonseka", status: "completed", amount: "USD 8,000", date: "3 days ago" },
 ];
 
 const upcomingDeadlines = [
@@ -116,7 +116,7 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                 <DollarSign className="h-4 w-4 text-primary" />
               </div>
             </div>
-            <p className="mt-2 text-2xl font-bold text-foreground">LKR {totalEarnings.toLocaleString()}</p>
+            <p className="mt-2 text-2xl font-bold text-foreground">USD {totalEarnings.toLocaleString()}</p>
             <div className="mt-1 flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
               <TrendingUp className="h-3.5 w-3.5" />
               <span>+18.2% vs last period</span>
@@ -192,7 +192,7 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v / 1000}k`} />
                   <Tooltip
-                    formatter={(value: number, name: string) => [`LKR ${value.toLocaleString()}`, name === "earnings" ? "Earnings" : "Target"]}
+                    formatter={(value: any, name: any) => [`USD ${Number(value).toLocaleString()}`, name]}
                     contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e5e7eb" }}
                   />
                   <Area type="monotone" dataKey="target" stroke="#cbd5e1" strokeDasharray="4 4" fill="none" strokeWidth={2} />
@@ -217,7 +217,7 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number, name: string) => [name === "No Services" ? "0" : `${value} services`, name]}
+                    formatter={(value: any, name: any) => [name === "No Services" ? "0" : `${value} services`, name]}
                     contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e5e7eb" }}
                   />
                 </PieChart>
@@ -254,7 +254,7 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                   <XAxis dataKey="day" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    formatter={(value: number) => [`${value} hrs`, "Hours"]}
+                    formatter={(value: any) => [`${value} hrs`, "Hours"]}
                     contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e5e7eb" }}
                   />
                   <Bar dataKey="hours" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={28} />
