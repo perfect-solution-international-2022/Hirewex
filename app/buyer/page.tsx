@@ -34,7 +34,7 @@ export default function BuyerDashboardPage() {
   }, []);
 
   return (
-    <DashboardShell title="Buyer" role="buyer" groups={groups}>
+    <DashboardShell title="Buyer" role="buyer">
       <div className="grid gap-4 md:grid-cols-4">
         {[["Open jobs","0"],["Active projects","0"],["Bids received","0"],["Spent","$0"]].map(([l,v]) => (
           <Card key={l} className="p-5">
