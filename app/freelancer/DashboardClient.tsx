@@ -65,14 +65,14 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
     : projectStatusData.reduce((sum, p) => sum + p.value, 0);
 
   return (
-    <DashboardShell title="Freelancer" role="freelancer" groups={freelancerNav}>
+    <DashboardShell title="Freelancer" role="freelancer">
       <div className="space-y-6">
 
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard Overview</h1>
-            <p className="text-sm text-muted-foreground">Here's how your freelance business is performing this month.</p>
+            <p className="text-sm text-muted-foreground">Here&apos;s how your freelance business is performing this month.</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
