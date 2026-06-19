@@ -151,7 +151,7 @@ export default function ProfilePage() {
     setIsUploadingAvatar(true);
     const canvas = editorRef.current.getImageScaledToCanvas();
     
-    canvas.toBlob(async (blob) => {
+    canvas.toBlob(async (blob: Blob | null) => {
       if (!blob) {
         setIsUploadingAvatar(false);
         return triggerTopToast("Failed to process image.");
