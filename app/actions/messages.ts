@@ -24,12 +24,11 @@ export async function sendMessage(conversationId: string, content: string) {
   try {
     // 1. Insert into database
     await db.insert(messages).values({
-      id: messageId,
-      conversationId: conversationId,
-      senderId: session.user.id,
-      body: content, 
-      content: content, 
-    });
+    id: messageId,
+    conversationId: conversationId,
+    senderId: session.user.id,
+    body: content,
+  });
 
     const newMessage = {
       id: messageId,
