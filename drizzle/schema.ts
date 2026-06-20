@@ -397,6 +397,18 @@ export const withdrawalMethods = mysqlTable("withdrawal_methods", {
 	primaryKey({ columns: [table.id], name: "withdrawal_methods_id"}),
 ]);
 
+export const serviceOrders = mysqlTable("service_orders", {
+  id: varchar({ length: 36 }).default(sql`(uuid())`).notNull().primaryKey(),
+  buyerId: varchar("buyer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  freelancerId: varchar("freelancer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  serviceId: varchar("service_id", { length: 255 }).notNull().references(() => freelancerServices.id, { onDelete: "cascade" }),
+  tier: varchar({ length: 50 }).notNull(),
+  price: decimal({ precision: 12, scale: 2 }).notNull(),
+  status: mysqlEnum("status", ["pending", "paid", "cancelled"]).default("pending").notNull(),
+  referenceId: varchar("reference_id", { length: 255 }), // The unique ID we send to OnePay
+  createdAt: datetime("created_at", { mode: "string" }).default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+});
+
 export const withdrawals = mysqlTable("withdrawals", {
 	id: varchar({ length: 36 }).default(sql`(uuid())`).notNull(),
 	userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" } ),

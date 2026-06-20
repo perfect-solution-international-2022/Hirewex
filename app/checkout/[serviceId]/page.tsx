@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, ShieldCheck } from "lucide-react";
 import Image from "next/image";
+import { createOnePayCheckout } from "@/app/actions/onepay";
 
 export const metadata = {
   title: "Checkout — Hirewex",
@@ -155,9 +156,16 @@ export default async function CheckoutPage({
                   <span className="font-bold text-2xl">{formatCurrency(total)}</span>
                 </div>
 
-                <Button size="lg" className="w-full font-bold text-lg h-14">
-                  Confirm & Pay
-                </Button>
+                <form action={createOnePayCheckout}>
+                  <input type="hidden" name="serviceId" value={service.id} />
+                  <input type="hidden" name="freelancerId" value={freelancer.id} />
+                  <input type="hidden" name="tier" value={tier} />
+                  <input type="hidden" name="total" value={total.toString()} />
+                  
+                  <Button type="submit" size="lg" className="w-full font-bold text-lg h-14 bg-[#1e88e5] hover:bg-[#1565c0]">
+                    Confirm & Pay via OnePay
+                  </Button>
+                </form>
 
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
                   <ShieldCheck className="h-4 w-4 text-green-600" />

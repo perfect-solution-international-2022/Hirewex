@@ -14,17 +14,26 @@ export const buyerNav = [
     label: "Main",
     items: [
       { title: "Dashboard", url: "/dashboard", icon: LayoutGrid },
-      { title: "My Projects", url: "/my-projects", icon: Briefcase },
+      { title: "Find Service", url: "/service", icon: Search },
     ],
   },
   {
     label: "Work",
     items: [
-      { title: "Post a Job", url: "/post-projects", icon: FileText },
+      { title: "My Jobs", url: "/my-projects", icon: Briefcase },
       { title: "Received Bids", url: "/my-bids", icon: FileText },
-      { title: "Find Service", url: "/service", icon: Search },
+      { title: "Post a Job", url: "/post-projects", icon: FileText },
+      
     ],
   },
+  {
+    label: "Money",
+    items: [
+      { title: "Paid", url: "/paid", icon: Briefcase },
+      
+    ],
+  },
+  
   {
     label: "Account",
     items: [
