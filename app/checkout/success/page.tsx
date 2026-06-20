@@ -1,24 +1,34 @@
 import { db } from "@/lib/db";
 import { serviceOrders } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 
-// Next.js passes URL parameters into the page component via searchParams
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: { reference?: string };
+  // Support for both Next.js 14 and Next.js 15 Promises
+  searchParams: Promise<{ [key: string]: string | undefined }> | { [key: string]: string | undefined };
 }) {
-  const referenceId = searchParams.reference;
+  // 1. Wait for the params to resolve (Fixes the Next.js 15 bug)
+  const params = await searchParams;
+  const referenceId = params.reference;
 
-  // 1. If there is no reference in the URL, send them away
+  // 2. Instead of redirecting to the homepage, let's catch the missing ID and print the data!
   if (!referenceId) {
-    redirect("/"); 
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <div className="p-8 bg-white rounded-lg shadow-md max-w-lg w-full">
+          <h1 className="text-xl font-bold text-red-600 mb-2">Debug Mode: Reference Missing</h1>
+          <p className="text-gray-700 mb-4">We didn't receive the "reference" parameter. Here is what OnePay actually sent back in the URL:</p>
+          <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto text-left">
+            {JSON.stringify(params, null, 2)}
+          </pre>
+        </div>
+      </div>
+    );
   }
 
-  // 2. Look up the order in your database using ONLY the secure reference ID
-  // This bypasses the need for the browser's session cookie right at this moment
+  // 3. Normal Database Lookup
   const [order] = await db
     .select()
     .from(serviceOrders)
@@ -28,14 +38,12 @@ export default async function CheckoutSuccessPage({
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <h1 className="text-2xl font-bold text-red-600">Order Not Found</h1>
-        <p>We could not locate this transaction.</p>
+        <p>We could not locate this transaction in our database.</p>
       </div>
     );
   }
 
-  // 3. (Optional but recommended) Update the order status to "paid" here 
-  // NOTE: In a production app, a backend Webhook from OnePay should handle this,
-  // but doing it here is fine for testing!
+  // 4. Mark as Paid!
   if (order.status === "pending") {
     await db
       .update(serviceOrders)
@@ -43,7 +51,7 @@ export default async function CheckoutSuccessPage({
       .where(eq(serviceOrders.referenceId, referenceId));
   }
 
-  // 4. Render the Success UI!
+  // 5. Success Screen
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
       <div className="p-8 bg-white rounded-lg shadow-md text-center max-w-md">
@@ -54,7 +62,7 @@ export default async function CheckoutSuccessPage({
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
         <p className="text-gray-600 mb-6">
-          Your order has been processed. The freelancer will begin working on your project shortly.
+          Your order has been processed successfully.
         </p>
         <Link 
           href="/dashboard" 
