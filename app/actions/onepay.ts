@@ -69,11 +69,17 @@ export async function createOnePayCheckout(formData: FormData) {
     }),
   });
 
-  const data = await response.json();
+ const data = await response.json();
 
-  if (data?.data?.redirect_url) {
+  // Look for the URL inside the 'gateway' object first!
+  if (data?.data?.gateway?.redirect_url) {
+    redirect(data.data.gateway.redirect_url);
+  } 
+  // Fallback just in case they ever switch it back
+  else if (data?.data?.redirect_url) {
     redirect(data.data.redirect_url);
-  } else {
+  } 
+  else {
     console.error("OnePay API Rejected the Request:", data);
     const errorDetails = data?.errors 
       ? JSON.stringify(data.errors) 
