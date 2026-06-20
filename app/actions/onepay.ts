@@ -13,57 +13,74 @@ export async function createOnePayCheckout(formData: FormData) {
   const serviceId = formData.get("serviceId") as string;
   const freelancerId = formData.get("freelancerId") as string;
   const tier = formData.get("tier") as string;
-  const totalAmount = parseFloat(formData.get("total") as string).toFixed(2); // Must be 2 decimals
-  const currency = "USD"; // You requested USD
+  
+  const rawAmount = parseFloat(formData.get("total") as string);
+  const currency = "USD"; 
 
-  // 1. Generate a unique reference ID for this order
-  const referenceId = crypto.randomUUID();
+  const appId = process.env.ONEPAY_APP_ID?.trim();
+  const hashSalt = process.env.ONEPAY_HASH_SALT?.trim();
+  
+  // 1. Pull the new API Sandbox URL from your .env
+  const onepayApiBaseUrl = process.env.ONEPAY_API_URL?.trim() || "https://api.onepay.lk";
 
-  const appId = process.env.ONEPAY_APP_ID as string;
-  const hashSalt = process.env.ONEPAY_HASH_SALT as string;
+  if (!appId || !hashSalt) {
+    throw new Error("CRITICAL: OnePay APP_ID or HASH_SALT missing from .env");
+  }
 
-  // 2. Generate the OnePay SHA-256 Security Hash
-  const hashString = `${appId}${currency}${totalAmount}${hashSalt}`;
+  const referenceId = crypto.randomUUID().replace(/-/g, "");
+
+  // 2. Hash amount strictly formatted to 2 decimal places ("15.00")
+  const amountHashString = rawAmount.toFixed(2); 
+
+  const hashString = `${appId}${currency}${amountHashString}${hashSalt}`;
   const hash = crypto.createHash('sha256').update(hashString).digest('hex');
 
-  // 3. Save pending order to Database FIRST
   await db.insert(serviceOrders).values({
     buyerId: session.user.id,
     freelancerId: freelancerId,
     serviceId: serviceId,
     tier: tier,
-    price: totalAmount,
+    price: amountHashString,
     status: "pending",
     referenceId: referenceId,
   });
 
-  // 4. Request Payment Link from OnePay API
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  
-  const response = await fetch("https://api.onepay.lk/v3/checkout/link/", {
+  let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://hirewex.vercel.app";
+  if (baseUrl.includes("localhost")) {
+    baseUrl = "https://hirewex.vercel.app"; 
+  }
+
+  // 3. Fire the request to https://api-sandbox.onepay.lk
+  const response = await fetch(`${onepayApiBaseUrl}/v3/checkout/link/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
     body: JSON.stringify({
       app_id: appId,
-      amount: parseFloat(totalAmount),
-      currency: currency,
-      hash: hash,
       reference: referenceId,
+      currency: currency,
+      amount: rawAmount, // JSON payload uses the raw float (15)
       customer_first_name: session.user.name?.split(" ")[0] || "Buyer",
       customer_last_name: session.user.name?.split(" ")[1] || "Name",
-      customer_phone_number: "+94770000000", // Fallback if user phone is null
-      customer_email: session.user.email,
+      customer_phone_number: "+94771234567",
+      customer_email: session.user.email || "buyer@hirewex.com",
       transaction_redirect_url: `${baseUrl}/checkout/success?reference=${referenceId}`,
+      hash: hash
     }),
   });
 
   const data = await response.json();
 
   if (data?.data?.redirect_url) {
-    // 5. Send user to OnePay's hosted payment page
     redirect(data.data.redirect_url);
   } else {
-    console.error("OnePay Error:", data);
-    throw new Error("Failed to create OnePay session");
+    console.error(`OnePay API (${onepayApiBaseUrl}) Rejected the Request:`, data);
+    const errorDetails = data?.errors 
+      ? JSON.stringify(data.errors) 
+      : (data?.message || JSON.stringify(data));
+      
+    throw new Error(`OnePay Validation Failed: ${errorDetails}`);
   }
 }
