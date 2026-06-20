@@ -2,42 +2,67 @@ import { db } from "@/lib/db";
 import { serviceOrders } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
 import Link from "next/link";
 
-export default async function SuccessPage({ searchParams }: { searchParams: { reference?: string } }) {
-  const resolvedSearchParams = await searchParams;
-  const reference = resolvedSearchParams.reference;
+// Next.js passes URL parameters into the page component via searchParams
+export default async function CheckoutSuccessPage({
+  searchParams,
+}: {
+  searchParams: { reference?: string };
+}) {
+  const referenceId = searchParams.reference;
 
-  if (!reference) redirect("/");
+  // 1. If there is no reference in the URL, send them away
+  if (!referenceId) {
+    redirect("/"); 
+  }
 
-  // Note: For perfect security, your OnePay Webhook (Callback URL) should also 
-  // verify this in the background, but we can optimistically update it here for the user.
-  await db.update(serviceOrders)
-    .set({ status: "paid" })
-    .where(eq(serviceOrders.referenceId, reference));
+  // 2. Look up the order in your database using ONLY the secure reference ID
+  // This bypasses the need for the browser's session cookie right at this moment
+  const [order] = await db
+    .select()
+    .from(serviceOrders)
+    .where(eq(serviceOrders.referenceId, referenceId));
 
+  if (!order) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold text-red-600">Order Not Found</h1>
+        <p>We could not locate this transaction.</p>
+      </div>
+    );
+  }
+
+  // 3. (Optional but recommended) Update the order status to "paid" here 
+  // NOTE: In a production app, a backend Webhook from OnePay should handle this,
+  // but doing it here is fine for testing!
+  if (order.status === "pending") {
+    await db
+      .update(serviceOrders)
+      .set({ status: "paid" })
+      .where(eq(serviceOrders.referenceId, referenceId));
+  }
+
+  // 4. Render the Success UI!
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="container mx-auto flex-1 px-4 flex items-center justify-center">
-        <Card className="max-w-md w-full text-center border-border shadow-md">
-          <CardContent className="pt-10 pb-8 space-y-6">
-            <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
-            <h1 className="text-3xl font-bold">Payment Successful!</h1>
-            <p className="text-muted-foreground">
-              Your OnePay transaction was successful and the freelancer has been notified.
-            </p>
-            <Button asChild className="w-full">
-              <Link href="/paid">View My Orders</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </main>
-      <SiteFooter />
+    <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+      <div className="p-8 bg-white rounded-lg shadow-md text-center max-w-md">
+        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
+        <p className="text-gray-600 mb-6">
+          Your order has been processed. The freelancer will begin working on your project shortly.
+        </p>
+        <Link 
+          href="/dashboard" 
+          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
+        >
+          Go to Dashboard
+        </Link>
+      </div>
     </div>
   );
 }
