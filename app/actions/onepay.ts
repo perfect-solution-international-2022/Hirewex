@@ -17,7 +17,6 @@ export async function createOnePayCheckout(formData: FormData) {
   const rawAmount = parseFloat(formData.get("total") as string);
   const currency = "USD"; 
 
-  // Trim the Sandbox API keys to destroy any hidden spaces
   const appId = process.env.ONEPAY_APP_ID?.trim();
   const hashSalt = process.env.ONEPAY_HASH_SALT?.trim();
   const appToken = process.env.ONEPAY_APP_TOKEN?.trim();
@@ -26,12 +25,11 @@ export async function createOnePayCheckout(formData: FormData) {
     throw new Error("CRITICAL: OnePay API keys missing from .env");
   }
 
-  const referenceId = crypto.randomUUID().replace(/-/g, "");
+  // Force the ID to be 20 characters max!
+  const referenceId = crypto.randomUUID().replace(/-/g, "").substring(0, 20);
 
-  // OnePay strictly requires the Hash amount to be exactly 2 decimal places (e.g., "15.00")
   const amountHashString = rawAmount.toFixed(2); 
 
-  // Generate the SHA-256 Hash
   const hashString = `${appId}${currency}${amountHashString}${hashSalt}`;
   const hash = crypto.createHash('sha256').update(hashString).digest('hex');
 
@@ -45,25 +43,23 @@ export async function createOnePayCheckout(formData: FormData) {
     referenceId: referenceId,
   });
 
-  // Ensure live HTTPS domain (OnePay strictly blocks localhost callback URLs)
   let baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://hirewex.vercel.app";
   if (baseUrl.includes("localhost")) {
     baseUrl = "https://hirewex.vercel.app"; 
   }
 
-  // Fire the request to the live URL with the App Token included!
   const response = await fetch("https://api.onepay.lk/v3/checkout/link/", {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
       "Accept": "application/json",
-      "Authorization": appToken // Required for v3 Checkout!
+      "Authorization": appToken
     },
     body: JSON.stringify({
       app_id: appId,
       reference: referenceId,
       currency: currency,
-      amount: rawAmount, // Standard number in JSON
+      amount: rawAmount,
       customer_first_name: session.user.name?.split(" ")[0] || "Buyer",
       customer_last_name: session.user.name?.split(" ")[1] || "Name",
       customer_phone_number: "+94771234567",
