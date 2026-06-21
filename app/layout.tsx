@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/components/SessionWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -23,20 +23,20 @@ export const metadata: Metadata = {
   description: "Post jobs, hire vetted freelancers, manage projects and payments — all in one secure marketplace.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch the session on the SERVER so the client never starts "blank"
+  const session = await auth();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers>
+        <Providers session={session}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-            {/* THIS MAKES THE ERROR POPUPS WORK SITE-WIDE */}
+            {children}
             <Toaster position="top-center" richColors />
           </ThemeProvider>
         </Providers>
