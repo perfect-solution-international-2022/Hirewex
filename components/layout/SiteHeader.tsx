@@ -18,7 +18,6 @@ const nav = [
   { href: "/service", label: "Find Freelancers" },
   { href: "/jobs", label: "Find a Job" },
   { href: "/how-it-works", label: "How it Works" },
-  { href: "/blog", label: "Blog" },
 ];
 
 function timeAgo(dateString: string) {

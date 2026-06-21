@@ -1,6 +1,17 @@
 import { db } from "@/lib/db";
-import { serviceOrders } from "@/drizzle/schema";
+import { serviceOrders, freelancerServices } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
+import { notifications } from "@/drizzle/schema";
+import Pusher from "pusher";
+import Link from "next/link";
+
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID!,
+  key: process.env.NEXT_PUBLIC_PUSHER_KEY!,
+  secret: process.env.PUSHER_SECRET!,
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+  useTLS: true,
+});
 
 export default async function CheckoutSuccessPage({
   searchParams,
@@ -41,14 +52,50 @@ export default async function CheckoutSuccessPage({
     );
   }
 
+  // Only fire the notification the FIRST time this order transitions to paid
   if (order.status === "pending") {
     await db
       .update(serviceOrders)
       .set({ status: "paid" })
       .where(eq(serviceOrders.referenceId, referenceId));
+
+    // Fetch service title for a friendlier notification message
+    let serviceTitle = "your service";
+    try {
+      const [service] = await db
+        .select({ title: freelancerServices.title })
+        .from(freelancerServices)
+        .where(eq(freelancerServices.id, order.serviceId));
+      if (service?.title) serviceTitle = service.title;
+    } catch (err) {
+      console.warn("Could not fetch service title for notification:", err);
+    }
+
+    // Notify the freelancer of the new paid order
+    if (order.freelancerId) {
+      const notificationId = crypto.randomUUID();
+      try {
+        await db.insert(notifications).values({
+          id: notificationId,
+          userId: order.freelancerId,
+          title: "New order received! 🎉",
+          body: `You received a new order for "${serviceTitle}" — $${parseFloat(order.price).toFixed(2)}.`,
+          link: `/freelancer/orders/${order.id}`,
+          read: 0,
+        });
+
+        await pusher.trigger(`user-${order.freelancerId}`, "notification", {
+          id: notificationId,
+          title: "New order received! 🎉",
+          body: `You received a new order for "${serviceTitle}" — $${parseFloat(order.price).toFixed(2)}.`,
+          link: `/freelancer/orders/${order.id}`,
+        });
+      } catch (err) {
+        console.warn("Failed to notify freelancer of new order (non-fatal):", err);
+      }
+    }
   }
 
-  // --- THE NEW POLISHED UI ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4 font-sans">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden text-center border border-gray-100">
@@ -94,7 +141,6 @@ export default async function CheckoutSuccessPage({
 
           {/* Action Buttons */}
           <div className="space-y-3">
-             {/* Using the <a> tag to ensure the hard refresh for the session cookie */}
              <a 
                href="/dashboard" 
                className="w-full flex justify-center items-center bg-gray-900 text-white font-semibold py-3.5 rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
@@ -104,6 +150,7 @@ export default async function CheckoutSuccessPage({
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                </svg>
              </a>
+             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
              <a 
                href="/" 
                className="w-full flex justify-center items-center bg-white text-gray-600 font-semibold py-3.5 rounded-xl hover:bg-gray-50 border border-gray-200 transition-all duration-200 active:scale-[0.98]"
