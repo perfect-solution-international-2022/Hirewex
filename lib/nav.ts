@@ -50,7 +50,7 @@ export const freelancerNav = [
     items: [
       { title: "Dashboard", url: "/freelancer", icon: LayoutGrid },
       { title: "Projects", url: "/freelancer/projects", icon: Briefcase },
-      { title: "Orders", url: "/freelancer/Orders", icon: FileText },
+      { title: "Orders", url: "/freelancer/orders", icon: FileText },
       { title: "Submitted Bids", url: "/freelancer/submitted-bids", icon: FileText },
       { title: "Hired Jobs", url: "/freelancer/hired", icon: PartyPopper },
     ],
