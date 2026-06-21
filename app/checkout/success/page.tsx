@@ -64,12 +64,13 @@ export default async function CheckoutSuccessPage({
         <p className="text-gray-600 mb-6">
           Your order has been processed successfully.
         </p>
-        <Link 
+        {/* Using standard <a> tag to force a full page reload and restore cookies */}
+        <a 
           href="/dashboard" 
-          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition inline-block"
         >
           Go to Dashboard
-        </Link>
+        </a>
       </div>
     </div>
   );
