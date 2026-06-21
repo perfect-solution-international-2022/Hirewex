@@ -10,7 +10,7 @@ import { useSession, signOut } from "next-auth/react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LogOut, LayoutDashboard, User as UserIcon, Briefcase, ChevronDown, MessageCircle, ShieldAlert, Users, Bell, PartyPopper, CheckCircle2 } from "lucide-react"; 
 import { getProfileData } from "@/app/actions/profile"; 
-import { getNotifications, markNotificationRead, markAllNotificationsRead } from "@/app/actions/notifications";
+import { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotifications } from "@/app/actions/notifications";
 import { toast } from "sonner";
 import Pusher from "pusher-js";
 
@@ -42,6 +42,8 @@ export function SiteHeader() {
   const [notifList, setNotifList] = useState<any[]>([]);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [isLoadingNotifs, setIsLoadingNotifs] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [hasViewedThisOpen, setHasViewedThisOpen] = useState(false);
   
   const roles = session?.user?.roles || [];
   const isSellingMode = pathname.startsWith("/freelancer");
@@ -112,20 +114,13 @@ export function SiteHeader() {
   }, [session?.user?.id]);
 
   const handleNotifClick = async (notif: any) => {
-    if (!notif.read) {
-      setNotifList((prev) => prev.map((n) => (n.id === notif.id ? { ...n, read: 1 } : n)));
-      setUnreadNotifCount((prev) => Math.max(0, prev - 1));
-      markNotificationRead(notif.id);
-    }
+    setNotifList((prev) => prev.filter((n) => n.id !== notif.id));
+    setUnreadNotifCount((prev) => Math.max(0, prev - (notif.read ? 0 : 1)));
+    deleteNotifications([notif.id]);
     if (notif.link) window.location.href = notif.link;
   };
 
-  const handleMarkAllRead = async () => {
-    setNotifList((prev) => prev.map((n) => ({ ...n, read: 1 })));
-    setUnreadNotifCount(0);
-    await markAllNotificationsRead();
-  };
-  
+
   return (
     <>
       <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -145,18 +140,33 @@ export function SiteHeader() {
             <ThemeToggle />
 
             {session?.user && isApproved && (
-              <DropdownMenu onOpenChange={(open) => {
-                if (open && notifList.length === 0 && !isLoadingNotifs) {
-                  setIsLoadingNotifs(true);
-                  getNotifications().then((res) => {
-                    if (res.success) {
-                      setNotifList(res.data);
-                      setUnreadNotifCount(res.data.filter((n: any) => !n.read).length);
+              <DropdownMenu
+                open={bellOpen}
+                onOpenChange={(open) => {
+                  setBellOpen(open);
+
+                  if (open) {
+                    setHasViewedThisOpen(true);
+                    if (notifList.length === 0 && !isLoadingNotifs) {
+                      setIsLoadingNotifs(true);
+                      getNotifications().then((res) => {
+                        if (res.success) {
+                          setNotifList(res.data);
+                          setUnreadNotifCount(res.data.filter((n: any) => !n.read).length);
+                        }
+                        setIsLoadingNotifs(false);
+                      });
                     }
-                    setIsLoadingNotifs(false);
-                  });
-                }
-              }}>
+                  } else if (hasViewedThisOpen && notifList.length > 0) {
+                    // Closing the dropdown after viewing — clear them out
+                    const idsToClear = notifList.map((n) => n.id);
+                    setNotifList([]);
+                    setUnreadNotifCount(0);
+                    setHasViewedThisOpen(false);
+                    deleteNotifications(idsToClear);
+                  }
+                }}
+              >
                 <DropdownMenuTrigger asChild>
                   <button className="relative h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors">
                     <Bell className="h-4.5 w-4.5 text-muted-foreground" />
@@ -170,10 +180,8 @@ export function SiteHeader() {
                 <DropdownMenuContent align="end" className="w-80 p-0">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
                     <span className="text-sm font-bold text-foreground">Notifications</span>
-                    {unreadNotifCount > 0 && (
-                      <button onClick={handleMarkAllRead} className="text-xs text-primary hover:underline font-medium">
-                        Mark all read
-                      </button>
+                    {notifList.length > 0 && (
+                      <span className="text-[10px] text-muted-foreground">Clears when closed</span>
                     )}
                   </div>
                   <div className="max-h-96 overflow-y-auto">
@@ -248,6 +256,19 @@ export function SiteHeader() {
                       <DropdownMenuItem asChild>
                         <Link href="/settings/profile"><UserIcon className="mr-2 h-4 w-4" />Profile</Link>
                       </DropdownMenuItem>
+                      
+                      <DropdownMenuSeparator />
+                      
+                      {/* BUYER SECTION */}
+                      <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Buyer
+                      </div>
+                      <DropdownMenuItem asChild>
+                        <Link href="/my-projects"><Briefcase className="mr-2 h-4 w-4" />My Projects</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/my-bids"><Users className="mr-2 h-4 w-4" />My Bids</Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/chat" className="relative flex items-center justify-between w-full">
                           <div className="flex items-center">
@@ -264,17 +285,6 @@ export function SiteHeader() {
                       
                       <DropdownMenuSeparator />
                       
-                      {/* CLIENT SECTION */}
-                      <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Client
-                      </div>
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard"><Briefcase className="mr-2 h-4 w-4" />Client Dashboard</Link>
-                      </DropdownMenuItem>
-                      
-                      
-                      <DropdownMenuSeparator />
-                      
                       {/* FREELANCER SECTION */}
                       <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         Freelancer
@@ -282,7 +292,10 @@ export function SiteHeader() {
                       <DropdownMenuItem asChild>
                         <Link href="/freelancer"><UserIcon className="mr-2 h-4 w-4" />Freelancer Dashboard</Link>
                       </DropdownMenuItem>
-  
+                      <DropdownMenuItem asChild>
+                        <Link href="/freelancer/hired"><PartyPopper className="mr-2 h-4 w-4" />Hired Jobs</Link>
+                      </DropdownMenuItem>
+                      
                       <DropdownMenuSeparator />
                       
                       <DropdownMenuItem onClick={() => setShowSignOutModal(true)} className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer">
@@ -350,6 +363,7 @@ export function SiteFooter() {
         </div>
         <FooterCol title="For Clients" links={[["Post a job","/post-projects"],["Browse talent","/talent"],["How it works","/how-it-works"]]} />
         <FooterCol title="For Freelancers" links={[["Find work","/jobs"],["Create profile","/auth"],["Success score","/how-it-works"]]} />
+        <FooterCol title="Company" links={[["Blog","/blog"],["Privacy","/privacy"],["Terms","/terms"]]} />
       </div>
       <div className="border-t border-border/60 py-5 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} Hirewex. All rights reserved.</div>
     </footer>
