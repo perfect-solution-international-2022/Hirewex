@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
-// 1. Importing the Header and Footer
+import { useState, useRef } from "react";
 import { SiteHeader }  from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteHeader";
+import { sendSupportEmail } from "@/app/actions/sendSupportEmail";
+// 1. Import toast directly from sonner!
+import { toast } from "sonner";
 
 export default function SupportPage() {
   const [activeTab, setActiveTab] = useState<"buyer" | "freelancer">("buyer");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [isPending, setIsPending] = useState(false);
+  
+  const formRef = useRef<HTMLFormElement>(null);
 
   const buyerFaqs = [
     {
@@ -41,14 +46,48 @@ export default function SupportPage() {
 
   const currentFaqs = activeTab === "buyer" ? buyerFaqs : freelancerFaqs;
 
+  async function handleSubmit(formData: FormData) {
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const message = formData.get("message") as string;
+
+    // Manual Validation using Sonner Toasts
+    if (!name || name.trim() === "") {
+      toast.error("Please enter your name");
+      return;
+    }
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    if (!message || message.trim() === "") {
+      toast.error("Please describe your issue so we can help");
+      return;
+    }
+
+    setIsPending(true);
+    
+    // Create a loading toast and save its ID
+    const toastId = toast.loading("Sending message...");
+
+    const result = await sendSupportEmail(formData);
+    
+    setIsPending(false);
+    
+    if (result.success) {
+      // Update the exact same toast to show success
+      toast.success("Message sent successfully! We will be in touch.", { id: toastId });
+      formRef.current?.reset();
+    } else {
+      // Update the exact same toast to show an error
+      toast.error("Failed to send message. Please try again.", { id: toastId });
+    }
+  }
+
   return (
-    // ADDED: flex and flex-col to the main wrapper
     <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
-      
-      {/* 2. The Header Component */}
       <SiteHeader />
 
-      {/* ADDED: A main wrapper with flex-grow to push the footer down */}
       <main className="flex-grow pb-24">
         {/* Hero Section */}
         <div className="bg-primary text-primary-foreground py-16 px-6 text-center">
@@ -64,7 +103,6 @@ export default function SupportPage() {
             {/* Left Column: FAQs */}
             <div className="lg:col-span-3 space-y-6">
               
-              {/* Tab Switcher */}
               <div className="bg-card p-2 rounded-2xl shadow-sm border flex space-x-2">
                 <button
                   onClick={() => { setActiveTab("buyer"); setOpenFaq(0); }}
@@ -88,7 +126,6 @@ export default function SupportPage() {
                 </button>
               </div>
 
-              {/* FAQ Accordions */}
               <div className="bg-card rounded-2xl shadow-sm border overflow-hidden">
                 {currentFaqs.map((faq, index) => (
                   <div key={index} className="border-b last:border-0">
@@ -115,7 +152,6 @@ export default function SupportPage() {
                 ))}
               </div>
               
-              {/* Dispute Policy Mini-Card */}
               <div className="bg-accent/50 border border-accent rounded-2xl p-6 flex items-start space-x-4">
                 <svg className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -136,29 +172,30 @@ export default function SupportPage() {
                 <h2 className="text-xl font-bold mb-2">Contact Support</h2>
                 <p className="text-sm text-muted-foreground mb-6">Can't find the answer? Send us a message and we'll get back to you within 24 hours.</p>
                 
-                <form onSubmit={(e) => { e.preventDefault(); alert("Form submitted!"); }} className="space-y-4">
+                <form ref={formRef} action={handleSubmit} noValidate className="space-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Your Name</label>
                     <input 
                       type="text" 
+                      name="name" 
                       placeholder="John Doe" 
                       className="w-full px-4 py-3 rounded-xl border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition-all text-sm"
-                      required
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Email Address</label>
                     <input 
                       type="email" 
+                      name="email" 
                       placeholder="john@example.com" 
                       className="w-full px-4 py-3 rounded-xl border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition-all text-sm"
-                      required
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Order ID (Optional)</label>
                     <input 
                       type="text" 
+                      name="orderId" 
                       placeholder="e.g. #ONEP1234" 
                       className="w-full px-4 py-3 rounded-xl border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition-all text-sm"
                     />
@@ -167,17 +204,20 @@ export default function SupportPage() {
                     <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">How can we help?</label>
                     <textarea 
                       rows={4} 
+                      name="message" 
                       placeholder="Please describe your issue in detail..." 
                       className="w-full px-4 py-3 rounded-xl border bg-background focus:ring-2 focus:ring-primary focus:outline-none transition-all text-sm resize-none"
-                      required
                     ></textarea>
                   </div>
                   
                   <button 
                     type="submit" 
-                    className="w-full bg-primary text-primary-foreground font-semibold py-3.5 rounded-xl hover:opacity-90 transition-all duration-200 shadow-md active:scale-[0.98] mt-2"
+                    disabled={isPending}
+                    className={`w-full text-primary-foreground font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-md mt-2 ${
+                      isPending ? "bg-primary/70 cursor-not-allowed" : "bg-primary hover:opacity-90 active:scale-[0.98]"
+                    }`}
                   >
-                    Send Message
+                    {isPending ? "Sending..." : "Send Message"}
                   </button>
                 </form>
                 
@@ -187,7 +227,6 @@ export default function SupportPage() {
         </div>
       </main>
 
-      {/* The Footer Component - Now pushed safely to the bottom! */}
       <SiteFooter />
     </div>
   );
