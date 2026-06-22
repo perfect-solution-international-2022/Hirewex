@@ -15,14 +15,24 @@ function formatDate(d: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(d));
 }
 
-const TABS = ["All", "Pending", "Accepted", "Rejected", "Withdrawn"] as const;
+function timeUntilExpiry(rejectedAt: string): string {
+  const expiry = new Date(rejectedAt).getTime() + 24 * 60 * 60 * 1000;
+  const remaining = expiry - Date.now();
+  if (remaining <= 0) return "expiring soon";
+  const hours = Math.floor(remaining / (1000 * 60 * 60));
+  const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) return `disappears in ${hours}h ${minutes}m`;
+  return `disappears in ${minutes}m`;
+}
+
+const TABS = ["All", "Pending", "Accepted", "Rejected"] as const;
 type Tab = typeof TABS[number];
 
 const STATUS_MAP: Record<string, Tab> = {
-  pending: "Pending",
-  accepted: "Accepted",
-  rejected: "Rejected",
-  withdrawn: "Withdrawn",
+  pending:   "Pending",
+  accepted:  "Accepted",
+  rejected:  "Rejected",
+  withdrawn: "Pending", // treat withdrawn like pending for simplicity
 };
 
 const STATUS_BADGE: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
@@ -41,31 +51,37 @@ const STATUS_BADGE: Record<string, { label: string; className: string; icon: Rea
     className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200",
     icon: <XCircle className="h-3 w-3" />,
   },
-  withdrawn: {
-    label: "Withdrawn",
-    className: "bg-muted text-muted-foreground border-border",
-    icon: <AlertCircle className="h-3 w-3" />,
-  },
 };
 
 export function SubmittedBidsClient({ initialBids }: { initialBids: any[] }) {
   const [activeTab, setActiveTab] = useState<Tab>("All");
 
+  // Filter out rejected bids older than 24h client-side
+  const visibleBids = useMemo(() => {
+    return initialBids.filter(({ bid }) => {
+      if (bid.status === "rejected" && bid.rejectedAt) {
+        const expiry = new Date(bid.rejectedAt).getTime() + 24 * 60 * 60 * 1000;
+        if (Date.now() > expiry) return false;
+      }
+      return true;
+    });
+  }, [initialBids]);
+
   const filtered = useMemo(() => {
-    if (activeTab === "All") return initialBids;
-    return initialBids.filter(({ bid }) => (STATUS_MAP[bid.status] ?? "Pending") === activeTab);
-  }, [initialBids, activeTab]);
+    if (activeTab === "All") return visibleBids;
+    return visibleBids.filter(({ bid }) => (STATUS_MAP[bid.status] ?? "Pending") === activeTab);
+  }, [visibleBids, activeTab]);
 
   const tabCounts = useMemo(() => {
     return TABS.reduce((acc, tab) => {
       acc[tab] = tab === "All"
-        ? initialBids.length
-        : initialBids.filter(({ bid }) => (STATUS_MAP[bid.status] ?? "Pending") === tab).length;
+        ? visibleBids.length
+        : visibleBids.filter(({ bid }) => (STATUS_MAP[bid.status] ?? "Pending") === tab).length;
       return acc;
     }, {} as Record<Tab, number>);
-  }, [initialBids]);
+  }, [visibleBids]);
 
-  if (initialBids.length === 0) {
+  if (visibleBids.length === 0) {
     return (
       <div className="space-y-6">
         <div>
@@ -78,9 +94,7 @@ export function SubmittedBidsClient({ initialBids }: { initialBids: any[] }) {
               <FileText className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-xl font-bold">No bids submitted yet</h3>
-            <p className="text-muted-foreground max-w-sm">
-              Browse open jobs and submit a proposal to get started.
-            </p>
+            <p className="text-muted-foreground max-w-sm">Browse open jobs and submit a proposal to get started.</p>
             <Button asChild className="mt-2">
               <Link href="/jobs"><Search className="h-4 w-4 mr-2" /> Find Jobs</Link>
             </Button>
@@ -92,14 +106,13 @@ export function SubmittedBidsClient({ initialBids }: { initialBids: any[] }) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Submitted Bids</h1>
           <p className="text-muted-foreground mt-1">Track every proposal you've sent to buyers.</p>
         </div>
         <Badge variant="secondary" className="text-sm px-3 py-1 w-fit">
-          {initialBids.length} total {initialBids.length === 1 ? "bid" : "bids"}
+          {visibleBids.length} total {visibleBids.length === 1 ? "bid" : "bids"}
         </Badge>
       </div>
 
@@ -125,11 +138,9 @@ export function SubmittedBidsClient({ initialBids }: { initialBids: any[] }) {
         ))}
       </div>
 
-      {/* List */}
       {filtered.length === 0 ? (
         <div className="py-16 text-center">
           <p className="text-sm font-medium text-foreground">No {activeTab.toLowerCase()} bids</p>
-          <p className="text-xs text-muted-foreground mt-1">Nothing here right now.</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -138,22 +149,30 @@ export function SubmittedBidsClient({ initialBids }: { initialBids: any[] }) {
             const buyerName = buyer?.displayName || buyer?.name || "Client";
             const buyerAvatar = buyer?.avatarUrl || buyer?.image || "";
             const isAccepted = bid.status === "accepted";
+            const isRejected = bid.status === "rejected";
 
             return (
               <Card
                 key={bid.id}
                 className={`shadow-sm overflow-hidden ${
-                  isAccepted ? "border-emerald-200 dark:border-emerald-900 bg-emerald-50/30 dark:bg-emerald-900/5" : "border-border/60"
+                  isAccepted ? "border-emerald-200 dark:border-emerald-900 bg-emerald-50/30 dark:bg-emerald-900/5"
+                  : isRejected ? "border-red-200 dark:border-red-900 bg-red-50/20 dark:bg-red-900/5 opacity-80"
+                  : "border-border/60"
                 }`}
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-
                     <div className="space-y-3 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${badge.className}`}>
                           {badge.icon} {badge.label}
                         </span>
+                        {/* Countdown for rejected bids */}
+                        {isRejected && bid.rejectedAt && (
+                          <span className="text-[10px] text-red-500 font-medium">
+                            {timeUntilExpiry(bid.rejectedAt)}
+                          </span>
+                        )}
                         {category?.name && (
                           <span className="text-[10px] uppercase tracking-wider font-semibold bg-muted px-2 py-0.5 rounded text-muted-foreground">
                             {category.name}
@@ -165,7 +184,6 @@ export function SubmittedBidsClient({ initialBids }: { initialBids: any[] }) {
                         {job.title}
                       </Link>
 
-                      {/* Client info */}
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-7 w-7">
                           <AvatarImage src={buyerAvatar} />
@@ -195,13 +213,14 @@ export function SubmittedBidsClient({ initialBids }: { initialBids: any[] }) {
                       )}
                     </div>
 
-                    {/* Actions */}
                     <div className="flex shrink-0 gap-2 w-full md:w-auto items-center mt-4 md:mt-0">
-                      <Button variant="outline" className="flex-1 md:flex-none" asChild>
-                        <Link href={`/jobs/${job.id}`}>
-                          <Briefcase className="h-4 w-4 mr-1.5" /> View Job
-                        </Link>
-                      </Button>
+                      {!isRejected && (
+                        <Button variant="outline" className="flex-1 md:flex-none" asChild>
+                          <Link href={`/jobs/${job.id}`}>
+                            <Briefcase className="h-4 w-4 mr-1.5" /> View Job
+                          </Link>
+                        </Button>
+                      )}
                       {isAccepted && (
                         <Button className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
                           <Link href="/freelancer/hired">
