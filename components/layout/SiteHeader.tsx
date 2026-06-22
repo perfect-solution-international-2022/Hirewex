@@ -362,7 +362,7 @@ export function SiteFooter() {
         </div>
         <FooterCol title="For Clients" links={[["Post a job","/post-projects"],["Browse talent","/talent"],["How it works","/how-it-works"]]} />
         <FooterCol title="For Freelancers" links={[["Find work","/jobs"],["Create profile","/auth"],["Success score","/how-it-works"]]} />
-        <FooterCol title="Company" links={[["Blog","/blog"],["Privacy","/privacy"],["Terms","/terms"]]} />
+        <FooterCol title="Company" links={[["Support","/support"],["Privacy","/privacy"],["Terms","/terms"]]} />
       </div>
       <div className="border-t border-border/60 py-5 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} Hirewex. All rights reserved.</div>
     </footer>

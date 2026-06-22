@@ -21,7 +21,7 @@ export default function HowItWorksPage() {
           {[
             { icon: Briefcase, title: "1. Post or bid", desc: "Buyers describe the work. Freelancers send tailored bids." },
             { icon: MessagesSquare, title: "2. Collaborate", desc: "Chat, share files, and track milestones in one place." },
-            { icon: Wallet, title: "3. Escrow", desc: "Buyer funds the project. Money is held safely until approval." },
+            { icon: Wallet, title: "3. Payment On Hold", desc: "Buyer funds the project. Money is held safely until approval." },
             { icon: ShieldCheck, title: "4. Release & review", desc: "Approve work to release payment. Leave a review." },
           ].map((s, i) => (
             <Card key={i} className="p-6">

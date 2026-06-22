@@ -116,7 +116,6 @@ export default async function HomePage() {
               </div>
 
               <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /> Escrow protected</span>
                 <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Verified profiles</span>
                 <span className="inline-flex items-center gap-2"><Star className="h-4 w-4 text-primary" /> 4.9 avg rating</span>
               </div>
@@ -255,7 +254,7 @@ export default async function HomePage() {
             {[
               { icon: Briefcase, title: "Post or find a job", desc: "Buyers describe their need. Freelancers discover and bid in seconds." },
               { icon: MessagesSquare, title: "Collaborate", desc: "Built-in chat, milestones, and file sharing keep projects on track." },
-              { icon: Wallet, title: "Pay safely", desc: "Funds are held in escrow and released when you approve the work." },
+              { icon: Wallet, title: "Pay safely", desc: "Funds are held and released when you approve the work." },
             ].map((s, i) => (
               <Card key={i} className="relative p-6 shadow-[var(--shadow-card)]">
                 <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">

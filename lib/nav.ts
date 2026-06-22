@@ -42,6 +42,12 @@ export const buyerNav = [
       { title: "Profile", url: "/settings/profile", icon: User },
     ],
   },
+  {
+    label: "Help",
+    items: [
+      { title: "Support", url: "/support", icon: LifeBuoy },
+    ],
+  },
 ];
 
 
@@ -81,7 +87,7 @@ export const freelancerNav = [
   {
     label: "Help",
     items: [
-      { title: "Support", url: "/freelancer/support", icon: LifeBuoy },
+      { title: "Support", url: "/support", icon: LifeBuoy },
     ],
   },
 ];
