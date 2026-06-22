@@ -258,17 +258,7 @@ export function SiteHeader() {
                       </DropdownMenuItem>
                       
                       <DropdownMenuSeparator />
-                      
-                      {/* BUYER SECTION */}
-                      <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Buyer
-                      </div>
-                      <DropdownMenuItem asChild>
-                        <Link href="/my-projects"><Briefcase className="mr-2 h-4 w-4" />My Projects</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/my-bids"><Users className="mr-2 h-4 w-4" />My Bids</Link>
-                      </DropdownMenuItem>
+
                       <DropdownMenuItem asChild>
                         <Link href="/chat" className="relative flex items-center justify-between w-full">
                           <div className="flex items-center">
@@ -282,6 +272,18 @@ export function SiteHeader() {
                           )}
                         </Link>
                       </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+                      
+                      {/* BUYER SECTION */}
+                      <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        Buyer
+                      </div>
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard"><Briefcase className="mr-2 h-4 w-4" />Buyer Dashboard</Link>
+                      </DropdownMenuItem>
+                    
+                      
                       
                       <DropdownMenuSeparator />
                       
@@ -291,9 +293,6 @@ export function SiteHeader() {
                       </div>
                       <DropdownMenuItem asChild>
                         <Link href="/freelancer"><UserIcon className="mr-2 h-4 w-4" />Freelancer Dashboard</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/freelancer/hired"><PartyPopper className="mr-2 h-4 w-4" />Hired Jobs</Link>
                       </DropdownMenuItem>
                       
                       <DropdownMenuSeparator />

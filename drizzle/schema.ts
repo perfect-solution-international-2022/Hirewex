@@ -42,6 +42,7 @@ export const bids = mysqlTable("bids", {
 	amount: decimal({ precision: 12, scale: 2 }).notNull(),
 	deliveryDays: int("delivery_days"),
 	coverLetter: text("cover_letter"),
+	rejectedAt: datetime("rejected_at", { mode: 'string' }),
 	status: mysqlEnum(['pending','accepted','rejected','withdrawn']).default('pending').notNull(),
 	createdAt: datetime("created_at", { mode: 'string'}).default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 	updatedAt: datetime("updated_at", { mode: 'string'}).default(sql`(CURRENT_TIMESTAMP)`).notNull(),

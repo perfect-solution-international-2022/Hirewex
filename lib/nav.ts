@@ -29,7 +29,8 @@ export const buyerNav = [
   {
     label: "Money",
     items: [
-      { title: "Paid", url: "/paid", icon: Briefcase },
+      { title: "Purchased Services", url: "/paid", icon: Briefcase },
+      { title: "Hired Freelancers", url: "/hired-freelancers", icon: Briefcase },
       
     ],
   },
