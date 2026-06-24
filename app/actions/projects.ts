@@ -197,7 +197,7 @@ export async function reviewSubmissionAction(
     if (submission.type === "project" && submission.projectId) {
       if (action === "accepted") {
         await db.update(projects)
-          .set({ status: "completed", completedAt: new Date().toISOString() })
+          .set({ status: "completed", completedAt: new Date().toISOString().slice(0, 19).replace("T", " ") })
           .where(eq(projects.id, submission.projectId));
       } else {
         await db.update(projects).set({ status: "active" }).where(eq(projects.id, submission.projectId));
