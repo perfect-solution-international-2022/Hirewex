@@ -6,7 +6,7 @@ import {
   UserCog, Wallet, BarChart3,
   Settings, FileBadge, Image as ImageIcon, Globe, Bell,
   CreditCard, Languages, Shield,
-  ClipboardCheck, PartyPopper, Search, ClipboardList
+  ClipboardCheck, PartyPopper, Search, ClipboardList, ArrowRightLeft
 } from "lucide-react";
 
 export const buyerNav = [
@@ -111,12 +111,13 @@ export const adminNav = [
   { label: "Users", items: [
     { title: "Freelancers", url: "/admin/freelancers", icon: UserCog },
     { title: "Buyers", url: "/admin/buyers", icon: UsersIcon },
+    { title: "Bids", url: "/admin/bids", icon: FileText },
   ]},
   { label: "Finance", items: [
+    { title: "Payment Release", url: "/admin/payments", icon: ArrowRightLeft },
+    { title: "Transactions", url: "/admin/transactions", icon: Receipt },
     { title: "Deposits", url: "/admin/deposits", icon: Wallet },
     { title: "Withdrawals", url: "/admin/withdrawals", icon: ArrowDownToLine },
-    { title: "Payment Gateways", url: "/admin/gateways", icon: CreditCard },
-    { title: "Charges", url: "/admin/charges", icon: Wallet },
   ]},
   { label: "Support", items: [
     { title: "Tickets", url: "/admin/tickets", icon: LifeBuoy }

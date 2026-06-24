@@ -440,6 +440,9 @@ export const projectSubmissions = mysqlTable("project_submissions", {
   linkUrl: text("link_url"),
   status: mysqlEnum("ps_status", ["pending", "accepted", "rejected", "revision_requested"]).default("pending").notNull(),
   buyerNote: text("buyer_note"),
+  paymentReleasedAt: datetime("payment_released_at", { mode: "string" }),
+  releasedAmount: decimal("released_amount", { precision: 12, scale: 2 }),
+  platformFeePercent: decimal("platform_fee_percent", { precision: 5, scale: 2 }),
   createdAt: datetime("created_at", { mode: "string" }).default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 },
 (table) => [
