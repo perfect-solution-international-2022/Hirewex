@@ -20,7 +20,7 @@ export function HiredJobsClient({ hiredJobs }: { hiredJobs: any[] }) {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Hired Jobs</h1>
-          <p className="text-muted-foreground mt-1">Projects you've been hired for will appear here.</p>
+          <p className="text-muted-foreground mt-1">Projects you&apos;ve been hired for will appear here.</p>
         </div>
         <Card className="border-dashed border-2 bg-transparent py-20 text-center">
           <CardContent className="flex flex-col items-center justify-center gap-3">
@@ -45,7 +45,7 @@ export function HiredJobsClient({ hiredJobs }: { hiredJobs: any[] }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Hired Jobs</h1>
-          <p className="text-muted-foreground mt-1">Projects you've been hired for.</p>
+          <p className="text-muted-foreground mt-1">Projects you&apos;ve been hired for.</p>
         </div>
         <Badge variant="secondary" className="text-sm px-3 py-1 w-fit">
           {hiredJobs.length} active {hiredJobs.length === 1 ? "hire" : "hires"}
@@ -115,6 +115,7 @@ export function HiredJobsClient({ hiredJobs }: { hiredJobs: any[] }) {
                       </Link>
                     </Button>
                   </div>
+                  
                 </div>
               </CardContent>
             </Card>

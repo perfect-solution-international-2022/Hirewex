@@ -18,7 +18,7 @@ export function DashboardSidebar({ role }: { role: "admin" | "freelancer" | "buy
   const groups = role === "admin" ? adminNav : role === "buyer" ? buyerNav : freelancerNav;
 
   // Set the logo link based on role
-  const logoHref = role === "admin" ? "/admin" : role === "buyer" ? "/dashboard" : "/freelancer";
+  const logoHref = role === "admin" ? "/admin" : role === "buyer" ? "/" : "/";
 
   return (
     <Sidebar>
