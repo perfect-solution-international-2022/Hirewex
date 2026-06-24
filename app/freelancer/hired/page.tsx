@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { bids, jobs, users, categories } from "@/drizzle/schema";
+import { bids, jobs, users, categories, projects } from "@/drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
@@ -22,11 +22,13 @@ export default async function HiredJobsPage() {
       job: jobs,
       buyer: users,
       category: categories,
+      project: projects,
     })
     .from(bids)
     .innerJoin(jobs, eq(bids.jobId, jobs.id))
     .leftJoin(users, eq(jobs.buyerId, users.id))
     .leftJoin(categories, eq(jobs.categoryId, categories.id))
+    .leftJoin(projects, eq(projects.bidId, bids.id))
     .where(and(eq(bids.freelancerId, session.user.id), eq(bids.status, "accepted")))
     .orderBy(desc(bids.createdAt));
 

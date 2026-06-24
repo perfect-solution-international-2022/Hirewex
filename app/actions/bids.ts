@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { bids, jobs, notifications } from "@/drizzle/schema";
+import { bids, jobs, notifications, projects } from "@/drizzle/schema";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { eq, and } from "drizzle-orm";
@@ -110,8 +110,22 @@ export async function hireBidAction(bidId: string, jobId: string, freelancerId: 
       return { success: false, error: "Unauthorized" };
     }
 
+    // Get bid amount for project creation
+    const [bidRow] = await db.select({ amount: bids.amount }).from(bids).where(eq(bids.id, bidId)).limit(1);
+
     // Accept this bid
     await db.update(bids).set({ status: "accepted" }).where(eq(bids.id, bidId));
+
+    // Create a project record
+    await db.insert(projects).values({
+      id: crypto.randomUUID(),
+      jobId,
+      bidId,
+      buyerId: session.user.id,
+      freelancerId,
+      amount: bidRow?.amount ?? "0",
+      status: "active",
+    });
 
     // Reject all other pending bids on this job
     await db

@@ -428,6 +428,25 @@ export const withdrawals = mysqlTable("withdrawals", {
 	primaryKey({ columns: [table.id], name: "withdrawals_id"}),
 ]);
 
+export const projectSubmissions = mysqlTable("project_submissions", {
+  id: varchar({ length: 36 }).default(sql`(uuid())`).notNull(),
+  projectId: varchar("project_id", { length: 36 }).notNull().references(() => projects.id, { onDelete: "cascade" }),
+  freelancerId: varchar("freelancer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  buyerId: varchar("buyer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  description: text("description"),
+  fileUrl: text("file_url"),
+  linkUrl: text("link_url"),
+  status: mysqlEnum("ps_status", ["pending", "accepted", "rejected", "revision_requested"]).default("pending").notNull(),
+  buyerNote: text("buyer_note"),
+  createdAt: datetime("created_at", { mode: "string" }).default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+},
+(table) => [
+  index("ps_project_id").on(table.projectId),
+  index("ps_freelancer_id").on(table.freelancerId),
+  index("ps_buyer_id").on(table.buyerId),
+  primaryKey({ columns: [table.id], name: "project_submissions_id" }),
+]);
+
 export const kycApplications = mysqlTable("kyc_applications", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
   userId: varchar("user_id", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),

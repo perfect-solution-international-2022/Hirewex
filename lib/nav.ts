@@ -1,12 +1,12 @@
 // lib/nav.ts
-import { 
-  Briefcase, FileText, LayoutGrid, Star, 
-  ArrowDownToLine, Receipt, MessageSquare, 
-  LifeBuoy, ShieldCheck, User, LayoutDashboard, Tags, Users as UsersIcon, 
-  UserCog, Wallet, BarChart3, 
-  Settings, FileBadge, Image as ImageIcon, Globe, Bell, 
+import {
+  Briefcase, FileText, LayoutGrid, Star,
+  ArrowDownToLine, Receipt, MessageSquare,
+  LifeBuoy, ShieldCheck, User, LayoutDashboard, Tags, Users as UsersIcon,
+  UserCog, Wallet, BarChart3,
+  Settings, FileBadge, Image as ImageIcon, Globe, Bell,
   CreditCard, Languages, Shield,
-  ClipboardCheck, PartyPopper, Search 
+  ClipboardCheck, PartyPopper, Search, ClipboardList
 } from "lucide-react";
 
 export const buyerNav = [
@@ -23,6 +23,7 @@ export const buyerNav = [
       { title: "My Jobs", url: "/my-projects", icon: Briefcase },
       { title: "Received Bids", url: "/my-bids", icon: FileText },
       { title: "Post a Job", url: "/post-projects", icon: FileText },
+      { title: "Submitted Work", url: "/submitted-work", icon: ClipboardList },
       
     ],
   },
