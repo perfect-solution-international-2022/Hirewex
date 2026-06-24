@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { bids, jobs, users } from "@/drizzle/schema";
 import { eq, desc } from "drizzle-orm";
-import { alias } from "drizzle-orm";
+import { aliasedTable } from "drizzle-orm";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
@@ -20,7 +20,7 @@ const statusColor: Record<string, string> = {
   withdrawn: "bg-muted text-muted-foreground border-border",
 };
 
-const fl = alias(users, "fl");
+const fl = aliasedTable(users, "fl");
 
 export default async function AdminBidsPage() {
   const rows = await db

@@ -3,7 +3,7 @@ import {
   projectSubmissions, projects, jobs, serviceOrders, freelancerServices, users,
 } from "@/drizzle/schema";
 import { eq, isNull, isNotNull, and, desc } from "drizzle-orm";
-import { alias } from "drizzle-orm";
+import { aliasedTable } from "drizzle-orm";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/DashboardShell";
@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Payment Release — Admin" };
 
-const fl = alias(users, "fl");
-const by = alias(users, "by");
+const fl = aliasedTable(users, "fl");
+const by = aliasedTable(users, "by");
 
 function submissionsQuery() {
   return db
