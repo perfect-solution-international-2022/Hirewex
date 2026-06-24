@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { projectSubmissions, projects, jobs, users } from "@/drizzle/schema";
+import { projectSubmissions, projects, jobs, users, serviceOrders, freelancerServices } from "@/drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
@@ -21,11 +21,15 @@ export default async function SubmittedWorkPage() {
       submission: projectSubmissions,
       project: projects,
       job: jobs,
+      serviceOrder: serviceOrders,
+      service: freelancerServices,
       freelancer: users,
     })
     .from(projectSubmissions)
-    .innerJoin(projects, eq(projectSubmissions.projectId, projects.id))
-    .innerJoin(jobs, eq(projects.jobId, jobs.id))
+    .leftJoin(projects, eq(projectSubmissions.projectId, projects.id))
+    .leftJoin(jobs, eq(projects.jobId, jobs.id))
+    .leftJoin(serviceOrders, eq(projectSubmissions.serviceOrderId, serviceOrders.id))
+    .leftJoin(freelancerServices, eq(serviceOrders.serviceId, freelancerServices.id))
     .innerJoin(users, eq(projectSubmissions.freelancerId, users.id))
     .where(eq(projectSubmissions.buyerId, session.user.id))
     .orderBy(desc(projectSubmissions.createdAt));

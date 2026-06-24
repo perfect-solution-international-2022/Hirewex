@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { bids, jobs, projects, projectSubmissions, notifications } from "@/drizzle/schema";
+import { bids, jobs, projects, projectSubmissions, notifications, serviceOrders, freelancerServices } from "@/drizzle/schema";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { put } from "@vercel/blob";
 import Pusher from "pusher";
 
@@ -25,6 +25,17 @@ async function triggerNotification(userId: string, payload: { id: string; title:
   }
 }
 
+async function uploadFile(file: File, userId: string): Promise<string> {
+  const blob = await put(
+    `submissions/${userId}/${crypto.randomUUID()}-${file.name}`,
+    file,
+    { access: "public" }
+  );
+  return blob.url;
+}
+
+// ─── Job bid submission ───────────────────────────────────────────────────────
+
 export async function submitWorkAction(formData: FormData) {
   try {
     const session = await auth();
@@ -43,15 +54,12 @@ export async function submitWorkAction(formData: FormData) {
 
     const [bid] = await db
       .select({ freelancerId: bids.freelancerId, amount: bids.amount, status: bids.status })
-      .from(bids)
-      .where(eq(bids.id, bidId))
-      .limit(1);
+      .from(bids).where(eq(bids.id, bidId)).limit(1);
 
     if (!bid || bid.freelancerId !== session.user.id || bid.status !== "accepted") {
       return { success: false, error: "Unauthorized" };
     }
 
-    // Get or create the project
     let [project] = await db.select().from(projects).where(eq(projects.bidId, bidId)).limit(1);
 
     if (!project) {
@@ -59,9 +67,7 @@ export async function submitWorkAction(formData: FormData) {
       if (!jobRow) return { success: false, error: "Job not found." };
       const projectId = crypto.randomUUID();
       await db.insert(projects).values({
-        id: projectId,
-        jobId,
-        bidId,
+        id: projectId, jobId, bidId,
         buyerId: jobRow.buyerId,
         freelancerId: session.user.id,
         amount: bid.amount,
@@ -72,24 +78,16 @@ export async function submitWorkAction(formData: FormData) {
 
     if (project.freelancerId !== session.user.id) return { success: false, error: "Unauthorized" };
 
-    let fileUrl: string | null = null;
-    if (file && file.size > 0) {
-      const blob = await put(
-        `submissions/${session.user.id}/${crypto.randomUUID()}-${file.name}`,
-        file,
-        { access: "public" }
-      );
-      fileUrl = blob.url;
-    }
+    const fileUrl = file && file.size > 0 ? await uploadFile(file, session.user.id) : null;
 
     await db.insert(projectSubmissions).values({
       id: crypto.randomUUID(),
+      type: "project",
       projectId: project.id,
+      serviceOrderId: null,
       freelancerId: session.user.id,
       buyerId: project.buyerId,
-      description,
-      fileUrl,
-      linkUrl,
+      description, fileUrl, linkUrl,
       status: "pending",
     });
 
@@ -100,7 +98,7 @@ export async function submitWorkAction(formData: FormData) {
     await triggerNotification(project.buyerId, {
       id: notifId,
       title: "Work submitted for review",
-      body: `A freelancer has submitted work for "${jobRow?.title ?? "your project"}". Review it now.`,
+      body: `A freelancer submitted work for "${jobRow?.title ?? "your project"}". Review it now.`,
       link: "/submitted-work",
     });
 
@@ -113,6 +111,69 @@ export async function submitWorkAction(formData: FormData) {
   }
 }
 
+// ─── Service order submission ─────────────────────────────────────────────────
+
+export async function submitOrderWorkAction(formData: FormData) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+    const orderId = formData.get("orderId") as string;
+    const description = (formData.get("description") as string)?.trim() || null;
+    const linkUrl = (formData.get("linkUrl") as string)?.trim() || null;
+    const file = formData.get("file") as File | null;
+
+    if (!orderId) return { success: false, error: "Missing order ID." };
+    if (!description && !linkUrl && (!file || file.size === 0)) {
+      return { success: false, error: "Please provide a description, link, or file." };
+    }
+
+    const [order] = await db
+      .select({
+        id: serviceOrders.id,
+        freelancerId: serviceOrders.freelancerId,
+        buyerId: serviceOrders.buyerId,
+        status: serviceOrders.status,
+        serviceId: serviceOrders.serviceId,
+      })
+      .from(serviceOrders).where(eq(serviceOrders.id, orderId)).limit(1);
+
+    if (!order || order.freelancerId !== session.user.id) return { success: false, error: "Unauthorized" };
+    if (order.status !== "paid") return { success: false, error: "This order is not active." };
+
+    const fileUrl = file && file.size > 0 ? await uploadFile(file, session.user.id) : null;
+
+    await db.insert(projectSubmissions).values({
+      id: crypto.randomUUID(),
+      type: "order",
+      projectId: null,
+      serviceOrderId: orderId,
+      freelancerId: session.user.id,
+      buyerId: order.buyerId,
+      description, fileUrl, linkUrl,
+      status: "pending",
+    });
+
+    const [svc] = await db.select({ title: freelancerServices.title }).from(freelancerServices).where(eq(freelancerServices.id, order.serviceId)).limit(1);
+    const notifId = crypto.randomUUID();
+    await triggerNotification(order.buyerId, {
+      id: notifId,
+      title: "Order delivery submitted",
+      body: `A freelancer has delivered your order "${svc?.title ?? "service"}". Review it now.`,
+      link: "/submitted-work",
+    });
+
+    revalidatePath(`/freelancer/orders/${orderId}`);
+    revalidatePath("/submitted-work");
+    return { success: true };
+  } catch (error) {
+    console.error("submitOrderWorkAction error:", error);
+    return { success: false, error: "Failed to submit delivery. Please try again." };
+  }
+}
+
+// ─── Buyer review (works for both types) ─────────────────────────────────────
+
 export async function reviewSubmissionAction(
   submissionId: string,
   action: "accepted" | "rejected" | "revision_requested",
@@ -123,40 +184,41 @@ export async function reviewSubmissionAction(
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
     const [submission] = await db
-      .select()
-      .from(projectSubmissions)
-      .where(eq(projectSubmissions.id, submissionId))
-      .limit(1);
+      .select().from(projectSubmissions).where(eq(projectSubmissions.id, submissionId)).limit(1);
 
-    if (!submission || submission.buyerId !== session.user.id) {
-      return { success: false, error: "Unauthorized" };
-    }
+    if (!submission || submission.buyerId !== session.user.id) return { success: false, error: "Unauthorized" };
 
     await db
       .update(projectSubmissions)
       .set({ status: action, buyerNote: buyerNote?.trim() || null })
       .where(eq(projectSubmissions.id, submissionId));
 
-    if (action === "accepted") {
-      await db
-        .update(projects)
-        .set({ status: "completed", completedAt: new Date().toISOString() })
-        .where(eq(projects.id, submission.projectId));
-    } else {
-      await db
-        .update(projects)
-        .set({ status: "active" })
-        .where(eq(projects.id, submission.projectId));
+    // Update project status for job submissions
+    if (submission.type === "project" && submission.projectId) {
+      if (action === "accepted") {
+        await db.update(projects)
+          .set({ status: "completed", completedAt: new Date().toISOString() })
+          .where(eq(projects.id, submission.projectId));
+      } else {
+        await db.update(projects).set({ status: "active" }).where(eq(projects.id, submission.projectId));
+      }
     }
 
-    const [proj] = await db
-      .select({ jobId: projects.jobId })
-      .from(projects)
-      .where(eq(projects.id, submission.projectId))
-      .limit(1);
-    const [jobRow] = proj
-      ? await db.select({ title: jobs.title }).from(jobs).where(eq(jobs.id, proj.jobId)).limit(1)
-      : [null];
+    // Build notification for freelancer
+    let contextTitle = "the project";
+    if (submission.type === "project" && submission.projectId) {
+      const [proj] = await db.select({ jobId: projects.jobId }).from(projects).where(eq(projects.id, submission.projectId)).limit(1);
+      if (proj) {
+        const [jobRow] = await db.select({ title: jobs.title }).from(jobs).where(eq(jobs.id, proj.jobId)).limit(1);
+        if (jobRow) contextTitle = jobRow.title;
+      }
+    } else if (submission.type === "order" && submission.serviceOrderId) {
+      const [ord] = await db.select({ serviceId: serviceOrders.serviceId }).from(serviceOrders).where(eq(serviceOrders.id, submission.serviceOrderId)).limit(1);
+      if (ord) {
+        const [svc] = await db.select({ title: freelancerServices.title }).from(freelancerServices).where(eq(freelancerServices.id, ord.serviceId)).limit(1);
+        if (svc) contextTitle = svc.title;
+      }
+    }
 
     const notifTitle =
       action === "accepted" ? "Work accepted!" :
@@ -164,21 +226,18 @@ export async function reviewSubmissionAction(
       "Revision requested";
     const notifBody =
       action === "accepted"
-        ? `Your work on "${jobRow?.title ?? "the project"}" has been accepted!`
+        ? `Your delivery for "${contextTitle}" has been accepted!`
         : action === "rejected"
-        ? `Your submission for "${jobRow?.title ?? "the project"}" was rejected.${buyerNote ? ` Reason: ${buyerNote}` : ""}`
-        : `The buyer requested a revision for "${jobRow?.title ?? "the project"}".${buyerNote ? ` Note: ${buyerNote}` : ""}`;
+        ? `Your submission for "${contextTitle}" was rejected.${buyerNote ? ` Reason: ${buyerNote}` : ""}`
+        : `The buyer requested a revision for "${contextTitle}".${buyerNote ? ` Note: ${buyerNote}` : ""}`;
 
+    const link = submission.type === "order" ? `/freelancer/orders/${submission.serviceOrderId}` : "/freelancer/hired";
     const notifId = crypto.randomUUID();
-    await triggerNotification(submission.freelancerId, {
-      id: notifId,
-      title: notifTitle,
-      body: notifBody,
-      link: "/freelancer/hired",
-    });
+    await triggerNotification(submission.freelancerId, { id: notifId, title: notifTitle, body: notifBody, link });
 
     revalidatePath("/submitted-work");
     revalidatePath("/freelancer/hired");
+    if (submission.serviceOrderId) revalidatePath(`/freelancer/orders/${submission.serviceOrderId}`);
     return { success: true };
   } catch (error) {
     console.error("reviewSubmissionAction error:", error);

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { serviceOrders, users, freelancerServices } from "@/drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { serviceOrders, users, freelancerServices, projectSubmissions } from "@/drizzle/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
 import { DashboardShell } from "@/components/layout/DashboardShell";
@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   ArrowLeft, Package, Tag, DollarSign, Calendar,
-  Mail, MessageCircle, Hash, ImageIcon
+  Mail, MessageCircle, Hash, ImageIcon, Send,
 } from "lucide-react";
+import { OrderWorkSubmission } from "./OrderWorkSubmission";
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   paid: {
@@ -58,16 +59,19 @@ export default async function FreelancerOrderDetailsPage({
       serviceImages: freelancerServices.images,
     })
     .from(serviceOrders)
-    .where(
-      and(
-        eq(serviceOrders.id, orderId),
-        eq(serviceOrders.freelancerId, session.user.id)
-      )
-    )
+    .where(and(eq(serviceOrders.id, orderId), eq(serviceOrders.freelancerId, session.user.id)))
     .leftJoin(users, eq(serviceOrders.buyerId, users.id))
     .leftJoin(freelancerServices, eq(serviceOrders.serviceId, freelancerServices.id));
 
   if (!order) notFound();
+
+  // Fetch latest submission for this order
+  const [latestSubmission] = await db
+    .select({ status: projectSubmissions.status, buyerNote: projectSubmissions.buyerNote })
+    .from(projectSubmissions)
+    .where(eq(projectSubmissions.serviceOrderId, orderId))
+    .orderBy(desc(projectSubmissions.createdAt))
+    .limit(1);
 
   const badge = STATUS_BADGE[order.status] ?? STATUS_BADGE.pending;
   const buyerName = order.buyerDisplayName || order.buyerName || "Guest User";
@@ -164,8 +168,8 @@ export default async function FreelancerOrderDetailsPage({
             </div>
           </div>
 
-          {/* RIGHT: buyer info */}
-          <div className="lg:col-span-1">
+          {/* RIGHT: buyer info + submit work */}
+          <div className="lg:col-span-1 space-y-4">
             <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm sticky top-24">
               <div className="px-6 py-4 border-b border-border/50 bg-muted/20">
                 <h2 className="text-sm font-bold text-foreground">Buyer Information</h2>
@@ -197,7 +201,7 @@ export default async function FreelancerOrderDetailsPage({
 
                 <div className="space-y-2 pt-2">
                   {order.buyerId && (
-                    <Button asChild className="w-full gap-2">
+                    <Button asChild className="w-full gap-2" variant="outline">
                       <Link href="/chat">
                         <MessageCircle className="h-4 w-4" /> Message Buyer
                       </Link>
@@ -213,6 +217,24 @@ export default async function FreelancerOrderDetailsPage({
                 </div>
               </div>
             </div>
+
+            {/* Submit Work section */}
+            {order.status === "paid" && (
+              <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
+                <div className="px-6 py-4 border-b border-border/50 bg-muted/20">
+                  <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Send className="h-4 w-4" /> Delivery
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <OrderWorkSubmission
+                    orderId={orderId}
+                    latestSubmissionStatus={latestSubmission?.status ?? null}
+                    latestBuyerNote={latestSubmission?.buyerNote ?? null}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
