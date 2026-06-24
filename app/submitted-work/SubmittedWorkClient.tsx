@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   CheckCircle2, XCircle, RotateCcw, Link2, FileText,
-  Download, Calendar, ClipboardList, Briefcase, Package,
+  Download, Calendar, ClipboardList, Briefcase, Package, AlertTriangle,
 } from "lucide-react";
 import { reviewSubmissionAction } from "@/app/actions/projects";
 
@@ -73,24 +73,30 @@ function ReviewDialog({
     });
   };
 
-  const config: Record<ReviewAction, { title: string; description: string; confirmLabel: string; confirmClass: string }> = {
+  const config: Record<ReviewAction, { title: string; description: string; warning: string | null; confirmLabel: string; confirmClass: string; needsNote: boolean }> = {
     accepted: {
-      title: "Accept Submission",
-      description: "Mark this work as complete. The freelancer will be notified.",
-      confirmLabel: "Accept Work",
+      title: "Accept this submission?",
+      description: "The freelancer will be marked as done and notified immediately.",
+      warning: "This cannot be undone. Once accepted, the submission is permanently closed.",
+      confirmLabel: "Yes, Accept Work",
       confirmClass: "bg-emerald-600 hover:bg-emerald-700 text-white",
+      needsNote: false,
     },
     rejected: {
-      title: "Reject Submission",
-      description: "Reject this submission. Please provide a reason so the freelancer understands.",
-      confirmLabel: "Reject",
+      title: "Reject this submission?",
+      description: "The freelancer will be notified. Please provide a reason so they understand what went wrong.",
+      warning: "This cannot be undone. The freelancer will see this rejection permanently.",
+      confirmLabel: "Yes, Reject",
       confirmClass: "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
+      needsNote: true,
     },
     revision_requested: {
-      title: "Request Revision",
-      description: "Ask the freelancer to revise their work. Describe what needs to change.",
-      confirmLabel: "Request Revision",
+      title: "Request a revision?",
+      description: "The freelancer will be asked to revise their work and can resubmit.",
+      warning: null,
+      confirmLabel: "Send Revision Request",
       confirmClass: "bg-orange-600 hover:bg-orange-700 text-white",
+      needsNote: true,
     },
   };
 
@@ -104,19 +110,36 @@ function ReviewDialog({
           <DialogTitle>{c.title}</DialogTitle>
           <DialogDescription>{c.description}</DialogDescription>
         </DialogHeader>
-        {(action === "rejected" || action === "revision_requested") && (
-          <div className="space-y-1.5 py-2">
-            <Label htmlFor="note">Your note <span className="text-destructive">*</span></Label>
-            <Textarea
-              id="note"
-              placeholder={action === "revision_requested" ? "Please update the color scheme and fix the typo on page 2..." : "The deliverable doesn't match the original brief because..."}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className="resize-none h-24 text-sm"
-              disabled={isPending}
-            />
-          </div>
-        )}
+
+        <div className="space-y-4 py-1">
+          {c.warning && (
+            <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{c.warning}</span>
+            </div>
+          )}
+
+          {c.needsNote && (
+            <div className="space-y-1.5">
+              <Label htmlFor="note">
+                Your note <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="note"
+                placeholder={
+                  action === "revision_requested"
+                    ? "Please update the color scheme and fix the typo on page 2..."
+                    : "The deliverable doesn't match the original brief because..."
+                }
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="resize-none h-24 text-sm"
+                disabled={isPending}
+              />
+            </div>
+          )}
+        </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={isPending}>Cancel</Button>
           <Button onClick={handleConfirm} disabled={isPending} className={c.confirmClass}>
