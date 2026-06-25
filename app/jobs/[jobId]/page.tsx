@@ -10,10 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createOrGetConversation } from "@/app/actions/chat";
-import { 
-  CheckCircle2, Clock, Calendar, Briefcase, 
+import {
+  CheckCircle2, Clock, Calendar, Briefcase,
   Globe, MapPin, ChevronRight, User, Zap,
-  DollarSign, Star
+  DollarSign, Star, FileText
 } from "lucide-react";
 
 function formatDate(dateString: string | Date | null) {
@@ -204,9 +204,21 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ job
                               )}
                             </div>
                           </div>
-                          <Button variant="outline" size="sm" asChild className="shrink-0">
-                            <Link href={`/profile-preview/${freelancer?.id}`}>View Profile</Link>
-                          </Button>
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/profile-preview/${freelancer?.id}`}>View Profile</Link>
+                            </Button>
+                            {bid.portfolioUrl && (
+                              <a
+                                href={bid.portfolioUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 text-xs text-primary font-medium hover:underline"
+                              >
+                                <FileText className="h-3.5 w-3.5" /> View Portfolio
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

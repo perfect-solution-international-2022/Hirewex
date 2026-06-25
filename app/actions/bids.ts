@@ -58,6 +58,7 @@ export async function submitBidAction(formData: FormData) {
       amount,
       deliveryDays: parseInt(deliveryDays),
       coverLetter: coverLetter || null,
+      portfolioUrl,
       status: "pending",
     });
 
