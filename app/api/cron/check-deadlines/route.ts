@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
   projects, serviceOrders, projectSubmissions,
-  refundRequests, notifications, freelancerServices, bids,
+  refundRequests, notifications, freelancerServices, bids, jobs,
 } from "@/drizzle/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import Pusher from "pusher";
 import { getServiceFeePercent } from "@/app/actions/platform-settings";
+import {
+  getUserEmail,
+  emailFreelancerDeadlineWarning,
+  emailBuyerApprovalWindowClosing,
+  emailAdminNewRefundRequest,
+  emailAdminAutoApproved,
+  emailAdminLateDelivery,
+} from "@/lib/email";
 
 const pusher = new Pusher({
   appId: process.env.PUSHER_APP_ID!,
@@ -43,10 +51,9 @@ export async function GET(req: NextRequest) {
   }
 
   const feeRate = (await getServiceFeePercent()) / 100;
-  let flagged = 0;
-  let autoApproved = 0;
+  let flagged = 0, autoApproved = 0, warned = 0;
 
-  // ── Existing refund project/order IDs (avoid duplicates) ──────────────────
+  // ── Existing refund IDs (avoid duplicates) ─────────────────────────────────
   const existingRefunds = await db
     .select({ projectId: refundRequests.projectId, serviceOrderId: refundRequests.serviceOrderId })
     .from(refundRequests)
@@ -55,57 +62,96 @@ export async function GET(req: NextRequest) {
   const refundedProjects = new Set(existingRefunds.map(r => r.projectId).filter(Boolean) as string[]);
   const refundedOrders   = new Set(existingRefunds.map(r => r.serviceOrderId).filter(Boolean) as string[]);
 
-  // ── 1. Late project deliveries (job bids) ─────────────────────────────────
+  // ── 1. Late project deliveries ─────────────────────────────────────────────
   const activeProjects = await db
-    .select({ project: projects, deliveryDays: bids.deliveryDays })
+    .select({ project: projects, deliveryDays: bids.deliveryDays, jobTitle: jobs.title })
     .from(projects)
     .leftJoin(bids, eq(projects.bidId, bids.id))
+    .leftJoin(jobs, eq(projects.jobId, jobs.id))
     .where(eq(projects.status, "active"));
 
-  for (const { project, deliveryDays } of activeProjects) {
+  for (const { project, deliveryDays, jobTitle } of activeProjects) {
     if (!project.startedAt || !deliveryDays) continue;
     if (refundedProjects.has(project.id)) continue;
-    if (daysSince(project.startedAt) < gracePeriod(deliveryDays)) continue;
 
-    const refundAmount = Number(project.amount);
-    const feePart      = +(refundAmount * feeRate).toFixed(2);
-    const grace        = gracePeriod(deliveryDays);
+    const elapsed = daysSince(project.startedAt);
+    const grace   = gracePeriod(deliveryDays);
+    const title   = jobTitle ?? "your project";
 
-    await db.insert(refundRequests).values({
-      id: crypto.randomUUID(),
-      type: "late_delivery",
-      projectId: project.id,
-      buyerId: project.buyerId,
-      freelancerId: project.freelancerId,
-      reason: `Freelancer did not submit work within the agreed ${deliveryDays}-day deadline. The ${grace}-day refund window has now elapsed.`,
-      refundAmount: refundAmount.toFixed(2),
-      serviceFeeRetained: feePart.toFixed(2),
-    });
+    if (elapsed >= grace) {
+      // Flag for refund
+      const refundAmount = Number(project.amount);
+      const feePart = +(refundAmount * feeRate).toFixed(2);
 
-    await db.update(projects).set({ status: "disputed" }).where(eq(projects.id, project.id));
+      await db.insert(refundRequests).values({
+        id: crypto.randomUUID(),
+        type: "late_delivery",
+        projectId: project.id,
+        buyerId: project.buyerId,
+        freelancerId: project.freelancerId,
+        reason: `Freelancer did not submit work within the agreed ${deliveryDays}-day deadline. The ${grace}-day refund window has elapsed.`,
+        refundAmount: refundAmount.toFixed(2),
+        serviceFeeRetained: feePart.toFixed(2),
+      });
+      await db.update(projects).set({ status: "disputed" }).where(eq(projects.id, project.id));
 
-    await pushNotif(project.buyerId,
-      "Refund Flagged for Admin Review",
-      `Your project was flagged for a refund because the freelancer did not deliver within ${deliveryDays} days. Admin will process this shortly.`,
-      "/submitted-work"
-    );
-    await pushNotif(project.freelancerId,
-      "Project Disputed — Refund Requested",
-      `A refund has been requested for one of your projects due to failure to deliver within ${deliveryDays} days.`,
-      "/freelancer/hired"
-    );
+      await pushNotif(project.buyerId,
+        "Refund Flagged for Admin Review",
+        `Your project "${title}" was flagged for a refund due to non-delivery within ${deliveryDays} days.`,
+        "/submitted-work"
+      );
+      await pushNotif(project.freelancerId,
+        "Project Disputed — Refund Requested",
+        `A refund was requested for "${title}" due to failure to deliver within ${deliveryDays} days.`,
+        "/freelancer/hired"
+      );
 
-    flagged++;
+      const [buyer, freelancer] = await Promise.all([
+        getUserEmail(project.buyerId),
+        getUserEmail(project.freelancerId),
+      ]);
+      await emailAdminLateDelivery({
+        contextTitle: title,
+        freelancerName: freelancer?.name ?? "Unknown",
+        buyerName: buyer?.name ?? "Unknown",
+        refundAmount: refundAmount.toFixed(2),
+        deliveryDays,
+      });
+      await emailAdminNewRefundRequest({
+        type: "late_delivery",
+        contextTitle: title,
+        buyerName: buyer?.name ?? "Unknown",
+        freelancerName: freelancer?.name ?? "Unknown",
+        refundAmount: refundAmount.toFixed(2),
+        reason: `Freelancer did not submit work within the ${deliveryDays}-day deadline. Grace period: ${grace} days.`,
+      });
+
+      flagged++;
+    } else if (elapsed >= grace - 2 && elapsed < grace - 1) {
+      // 2 days before grace period expires — warn freelancer
+      const daysLeft = Math.ceil(grace - elapsed);
+      const freelancer = await getUserEmail(project.freelancerId);
+      if (freelancer) {
+        await emailFreelancerDeadlineWarning(
+          freelancer.email, freelancer.name,
+          title, daysLeft, "/freelancer/hired",
+        );
+      }
+      warned++;
+    }
   }
 
   // ── 2. Late service order deliveries ──────────────────────────────────────
   const paidOrders = await db
-    .select({ order: serviceOrders, packages: freelancerServices.packages })
+    .select({
+      order: serviceOrders,
+      packages: freelancerServices.packages,
+      serviceTitle: freelancerServices.title,
+    })
     .from(serviceOrders)
     .leftJoin(freelancerServices, eq(serviceOrders.serviceId, freelancerServices.id))
     .where(eq(serviceOrders.status, "paid"));
 
-  // Orders with an active (pending/accepted) submission — skip these
   const activeSubOrderIds = new Set(
     (await db
       .select({ id: projectSubmissions.serviceOrderId })
@@ -114,46 +160,79 @@ export async function GET(req: NextRequest) {
     ).map(r => r.id).filter(Boolean) as string[]
   );
 
-  for (const { order, packages } of paidOrders) {
+  for (const { order, packages, serviceTitle } of paidOrders) {
     if (refundedOrders.has(order.id)) continue;
     if (activeSubOrderIds.has(order.id)) continue;
 
-    const pkgs        = packages as Record<string, { deliveryDays?: number }> | null;
+    const pkgs = packages as Record<string, { deliveryDays?: number }> | null;
     const deliveryDays = pkgs?.[order.tier]?.deliveryDays;
     if (!deliveryDays) continue;
 
-    if (daysSince(order.createdAt) < gracePeriod(deliveryDays)) continue;
+    const elapsed = daysSince(order.createdAt);
+    const grace   = gracePeriod(deliveryDays);
+    const title   = serviceTitle ?? "service order";
 
-    const refundAmount = Number(order.price);
-    const feePart      = +(refundAmount * feeRate).toFixed(2);
-    const grace        = gracePeriod(deliveryDays);
+    if (elapsed >= grace) {
+      const refundAmount = Number(order.price);
+      const feePart = +(refundAmount * feeRate).toFixed(2);
 
-    await db.insert(refundRequests).values({
-      id: crypto.randomUUID(),
-      type: "late_delivery",
-      serviceOrderId: order.id,
-      buyerId: order.buyerId,
-      freelancerId: order.freelancerId,
-      reason: `Freelancer did not submit work within the agreed ${deliveryDays}-day deadline for this service order. The ${grace}-day refund window has now elapsed.`,
-      refundAmount: refundAmount.toFixed(2),
-      serviceFeeRetained: feePart.toFixed(2),
-    });
+      await db.insert(refundRequests).values({
+        id: crypto.randomUUID(),
+        type: "late_delivery",
+        serviceOrderId: order.id,
+        buyerId: order.buyerId,
+        freelancerId: order.freelancerId,
+        reason: `Freelancer did not submit work within the agreed ${deliveryDays}-day deadline for this service order. The ${grace}-day refund window has elapsed.`,
+        refundAmount: refundAmount.toFixed(2),
+        serviceFeeRetained: feePart.toFixed(2),
+      });
 
-    await pushNotif(order.buyerId,
-      "Refund Flagged for Admin Review",
-      `Your service order was flagged for a refund because the freelancer did not deliver within ${deliveryDays} days.`,
-      "/submitted-work"
-    );
-    await pushNotif(order.freelancerId,
-      "Order Disputed — Refund Requested",
-      `A refund has been requested for one of your service orders due to failure to deliver within ${deliveryDays} days.`,
-      "/freelancer/orders"
-    );
+      await pushNotif(order.buyerId,
+        "Refund Flagged for Admin Review",
+        `Your order "${title}" was flagged for a refund due to non-delivery within ${deliveryDays} days.`,
+        "/submitted-work"
+      );
+      await pushNotif(order.freelancerId,
+        "Order Disputed — Refund Requested",
+        `A refund was requested for your order "${title}" due to failure to deliver within ${deliveryDays} days.`,
+        "/freelancer/orders"
+      );
 
-    flagged++;
+      const [buyer, freelancer] = await Promise.all([
+        getUserEmail(order.buyerId),
+        getUserEmail(order.freelancerId),
+      ]);
+      await emailAdminLateDelivery({
+        contextTitle: title,
+        freelancerName: freelancer?.name ?? "Unknown",
+        buyerName: buyer?.name ?? "Unknown",
+        refundAmount: refundAmount.toFixed(2),
+        deliveryDays,
+      });
+      await emailAdminNewRefundRequest({
+        type: "late_delivery",
+        contextTitle: title,
+        buyerName: buyer?.name ?? "Unknown",
+        freelancerName: freelancer?.name ?? "Unknown",
+        refundAmount: refundAmount.toFixed(2),
+        reason: `Freelancer did not deliver the service order within ${deliveryDays} days. Grace period: ${grace} days.`,
+      });
+
+      flagged++;
+    } else if (elapsed >= grace - 2 && elapsed < grace - 1) {
+      const daysLeft = Math.ceil(grace - elapsed);
+      const freelancer = await getUserEmail(order.freelancerId);
+      if (freelancer) {
+        await emailFreelancerDeadlineWarning(
+          freelancer.email, freelancer.name,
+          title, daysLeft, `/freelancer/orders/${order.id}`,
+        );
+      }
+      warned++;
+    }
   }
 
-  // ── 3. Auto-approve submissions older than 3 days ─────────────────────────
+  // ── 3. Auto-approve pending submissions older than 3 days ─────────────────
   const cutoff = new Date(Date.now() - 3 * 86_400_000)
     .toISOString().slice(0, 19).replace("T", " ");
 
@@ -178,17 +257,92 @@ export async function GET(req: NextRequest) {
 
     await pushNotif(sub.freelancerId,
       "Work Auto-Approved",
-      "Your submitted work was automatically approved because the buyer did not review it within 3 days. Admin will now release your payment.",
+      "Your submitted work was automatically approved because the buyer did not review it within 3 days.",
       sub.type === "order" ? "/freelancer/orders" : "/freelancer/hired"
     );
     await pushNotif(sub.buyerId,
       "Submission Auto-Approved",
-      "A submission was auto-approved because you did not review it within 3 days. Contact support if you have concerns.",
+      "A submission was auto-approved because you did not review it within 3 days.",
       "/submitted-work"
     );
+
+    // Resolve context title for admin email
+    let contextTitle = "project";
+    let amount = "0";
+    if (sub.type === "project" && sub.projectId) {
+      const [p] = await db.select({ amount: projects.amount, jobId: projects.jobId })
+        .from(projects).where(eq(projects.id, sub.projectId)).limit(1);
+      if (p) {
+        amount = p.amount;
+        const [j] = await db.select({ title: jobs.title }).from(jobs).where(eq(jobs.id, p.jobId)).limit(1);
+        if (j) contextTitle = j.title;
+      }
+    } else if (sub.type === "order" && sub.serviceOrderId) {
+      const [o] = await db.select({ price: serviceOrders.price, serviceId: serviceOrders.serviceId })
+        .from(serviceOrders).where(eq(serviceOrders.id, sub.serviceOrderId)).limit(1);
+      if (o) {
+        amount = o.price;
+        const [s] = await db.select({ title: freelancerServices.title })
+          .from(freelancerServices).where(eq(freelancerServices.id, o.serviceId)).limit(1);
+        if (s) contextTitle = s.title;
+      }
+    }
+
+    const freelancer = await getUserEmail(sub.freelancerId);
+    await emailAdminAutoApproved({
+      contextTitle,
+      freelancerName: freelancer?.name ?? "Unknown",
+      amount,
+    });
 
     autoApproved++;
   }
 
-  return NextResponse.json({ success: true, flagged, autoApproved });
+  // ── 4. Approval window closing in < 24 h (send buyer warning email) ────────
+  // Pending submissions between 2 and 3 days old
+  const warnEnd   = new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 19).replace("T", " ");
+  const warnStart = new Date(Date.now() - 3 * 86_400_000).toISOString().slice(0, 19).replace("T", " ");
+
+  const approachingApproval = await db
+    .select()
+    .from(projectSubmissions)
+    .where(and(
+      eq(projectSubmissions.status, "pending"),
+      sql`${projectSubmissions.createdAt} < ${warnEnd}`,
+      sql`${projectSubmissions.createdAt} >= ${warnStart}`
+    ));
+
+  for (const sub of approachingApproval) {
+    // Resolve context title
+    let contextTitle = "your submission";
+    if (sub.type === "project" && sub.projectId) {
+      const [p] = await db.select({ jobId: projects.jobId }).from(projects)
+        .where(eq(projects.id, sub.projectId)).limit(1);
+      if (p) {
+        const [j] = await db.select({ title: jobs.title }).from(jobs)
+          .where(eq(jobs.id, p.jobId)).limit(1);
+        if (j) contextTitle = j.title;
+      }
+    } else if (sub.type === "order" && sub.serviceOrderId) {
+      const [o] = await db.select({ serviceId: serviceOrders.serviceId })
+        .from(serviceOrders).where(eq(serviceOrders.id, sub.serviceOrderId)).limit(1);
+      if (o) {
+        const [s] = await db.select({ title: freelancerServices.title })
+          .from(freelancerServices).where(eq(freelancerServices.id, o.serviceId)).limit(1);
+        if (s) contextTitle = s.title;
+      }
+    }
+
+    const buyer = await getUserEmail(sub.buyerId);
+    if (buyer) {
+      await emailBuyerApprovalWindowClosing(buyer.email, buyer.name, contextTitle);
+    }
+    await pushNotif(sub.buyerId,
+      "Review window closing soon",
+      `Your submission for "${contextTitle}" will be auto-approved in less than 24 hours if you don't act.`,
+      "/submitted-work"
+    );
+  }
+
+  return NextResponse.json({ success: true, flagged, autoApproved, warned, approachingApproval: approachingApproval.length });
 }

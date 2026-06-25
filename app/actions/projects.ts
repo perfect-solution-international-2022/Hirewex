@@ -8,6 +8,12 @@ import { eq } from "drizzle-orm";
 import { put } from "@vercel/blob";
 import Pusher from "pusher";
 import { getServiceFeePercent } from "@/app/actions/platform-settings";
+import {
+  getUserEmail,
+  emailBuyerWorkSubmitted,
+  emailFreelancerSubmissionRejected,
+  emailAdminNewRefundRequest,
+} from "@/lib/email";
 
 const pusher = new Pusher({
   appId: process.env.PUSHER_APP_ID!,
@@ -103,6 +109,16 @@ export async function submitWorkAction(formData: FormData) {
       link: "/submitted-work",
     });
 
+    // Email buyer
+    const buyer = await getUserEmail(project.buyerId);
+    if (buyer) {
+      await emailBuyerWorkSubmitted(
+        buyer.email, buyer.name,
+        jobRow?.title ?? "your project",
+        session.user.name || "Your freelancer",
+      );
+    }
+
     revalidatePath("/freelancer/hired");
     revalidatePath("/submitted-work");
     return { success: true };
@@ -163,6 +179,16 @@ export async function submitOrderWorkAction(formData: FormData) {
       body: `A freelancer has delivered your order "${svc?.title ?? "service"}". Review it now.`,
       link: "/submitted-work",
     });
+
+    // Email buyer
+    const buyer = await getUserEmail(order.buyerId);
+    if (buyer) {
+      await emailBuyerWorkSubmitted(
+        buyer.email, buyer.name,
+        svc?.title ?? "your service order",
+        session.user.name || "Your freelancer",
+      );
+    }
 
     revalidatePath(`/freelancer/orders/${orderId}`);
     revalidatePath("/submitted-work");
@@ -270,6 +296,39 @@ export async function reviewSubmissionAction(
     const link = submission.type === "order" ? `/freelancer/orders/${submission.serviceOrderId}` : "/freelancer/hired";
     const notifId = crypto.randomUUID();
     await triggerNotification(submission.freelancerId, { id: notifId, title: notifTitle, body: notifBody, link });
+
+    // Emails on rejection
+    if (action === "rejected") {
+      const [freelancer, buyer] = await Promise.all([
+        getUserEmail(submission.freelancerId),
+        getUserEmail(submission.buyerId),
+      ]);
+      if (freelancer) {
+        await emailFreelancerSubmissionRejected(
+          freelancer.email, freelancer.name,
+          contextTitle, buyerNote,
+        );
+      }
+      // Fetch refund amount for admin email
+      let refundAmountStr = "0.00";
+      if (submission.type === "project" && submission.projectId) {
+        const [p] = await db.select({ amount: projects.amount }).from(projects).where(eq(projects.id, submission.projectId)).limit(1);
+        refundAmountStr = p?.amount ?? "0.00";
+      } else if (submission.type === "order" && submission.serviceOrderId) {
+        const [o] = await db.select({ price: serviceOrders.price }).from(serviceOrders).where(eq(serviceOrders.id, submission.serviceOrderId)).limit(1);
+        refundAmountStr = o?.price ?? "0.00";
+      }
+      await emailAdminNewRefundRequest({
+        type: "buyer_rejection",
+        contextTitle,
+        buyerName: buyer?.name ?? "Unknown",
+        freelancerName: freelancer?.name ?? "Unknown",
+        refundAmount: refundAmountStr,
+        reason: buyerNote?.trim()
+          ? `Buyer rejected submitted work. Reason: ${buyerNote.trim()}`
+          : "Buyer rejected submitted work without a reason.",
+      });
+    }
 
     revalidatePath("/submitted-work");
     revalidatePath("/freelancer/hired");

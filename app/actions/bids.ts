@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { eq, and } from "drizzle-orm";
 import { put } from "@vercel/blob";
 import Pusher from "pusher";
+import { getUserEmail, emailBuyerNewBid, emailFreelancerBidAccepted } from "@/lib/email";
 
 const pusher = new Pusher({
   appId: process.env.PUSHER_APP_ID!,
@@ -62,13 +63,14 @@ export async function submitBidAction(formData: FormData) {
       status: "pending",
     });
 
-    const [jobRow] = await db.select({ bidCount: jobs.bidCount, buyerId: jobs.buyerId, title: jobs.title }).from(jobs).where(eq(jobs.id, jobId));
-    await db
-      .update(jobs)
+    const [jobRow] = await db
+      .select({ bidCount: jobs.bidCount, buyerId: jobs.buyerId, title: jobs.title })
+      .from(jobs).where(eq(jobs.id, jobId));
+
+    await db.update(jobs)
       .set({ bidCount: (jobRow?.bidCount ?? 0) + 1 })
       .where(eq(jobs.id, jobId));
 
-    // Notify the buyer that a new bid came in
     if (jobRow?.buyerId) {
       const notificationId = crypto.randomUUID();
       await db.insert(notifications).values({
@@ -79,7 +81,6 @@ export async function submitBidAction(formData: FormData) {
         link: "/my-bids",
         read: 0,
       });
-
       try {
         await pusher.trigger(`user-${jobRow.buyerId}`, "notification", {
           id: notificationId,
@@ -89,6 +90,18 @@ export async function submitBidAction(formData: FormData) {
         });
       } catch (err) {
         console.warn("Pusher trigger failed (non-fatal):", err);
+      }
+
+      // Email the buyer about the new bid
+      const buyer = await getUserEmail(jobRow.buyerId);
+      if (buyer) {
+        await emailBuyerNewBid(
+          buyer.email, buyer.name,
+          jobRow.title,
+          session.user.name || "A freelancer",
+          amount,
+          parseInt(deliveryDays),
+        );
       }
     }
 
@@ -106,18 +119,19 @@ export async function hireBidAction(bidId: string, jobId: string, freelancerId: 
     const session = await auth();
     if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-    const [jobRow] = await db.select({ title: jobs.title, buyerId: jobs.buyerId }).from(jobs).where(eq(jobs.id, jobId));
+    const [jobRow] = await db
+      .select({ title: jobs.title, buyerId: jobs.buyerId })
+      .from(jobs).where(eq(jobs.id, jobId));
     if (!jobRow || jobRow.buyerId !== session.user.id) {
       return { success: false, error: "Unauthorized" };
     }
 
-    // Get bid amount for project creation
-    const [bidRow] = await db.select({ amount: bids.amount }).from(bids).where(eq(bids.id, bidId)).limit(1);
+    const [bidRow] = await db
+      .select({ amount: bids.amount, deliveryDays: bids.deliveryDays })
+      .from(bids).where(eq(bids.id, bidId)).limit(1);
 
-    // Accept this bid
     await db.update(bids).set({ status: "accepted" }).where(eq(bids.id, bidId));
 
-    // Create a project record
     await db.insert(projects).values({
       id: crypto.randomUUID(),
       jobId,
@@ -128,16 +142,12 @@ export async function hireBidAction(bidId: string, jobId: string, freelancerId: 
       status: "active",
     });
 
-    // Reject all other pending bids on this job
-    await db
-      .update(bids)
+    await db.update(bids)
       .set({ status: "rejected" })
       .where(and(eq(bids.jobId, jobId), eq(bids.status, "pending")));
 
-    // Mark job as in_progress
     await db.update(jobs).set({ status: "in_progress" }).where(eq(jobs.id, jobId));
 
-    // Notify the hired freelancer
     if (freelancerId) {
       const notificationId = crypto.randomUUID();
       await db.insert(notifications).values({
@@ -148,7 +158,6 @@ export async function hireBidAction(bidId: string, jobId: string, freelancerId: 
         link: "/freelancer/hired",
         read: 0,
       });
-
       try {
         await pusher.trigger(`user-${freelancerId}`, "notification", {
           id: notificationId,
@@ -158,6 +167,17 @@ export async function hireBidAction(bidId: string, jobId: string, freelancerId: 
         });
       } catch (err) {
         console.warn("Pusher trigger failed (non-fatal):", err);
+      }
+
+      // Email the freelancer
+      const freelancer = await getUserEmail(freelancerId);
+      if (freelancer) {
+        await emailFreelancerBidAccepted(
+          freelancer.email, freelancer.name,
+          jobRow.title,
+          bidRow?.amount ?? "0",
+          bidRow?.deliveryDays ?? 7,
+        );
       }
     }
 

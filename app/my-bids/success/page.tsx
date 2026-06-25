@@ -3,6 +3,7 @@ import { bids, jobs, notifications } from "@/drizzle/schema";
 import { eq, and, ne } from "drizzle-orm";
 import Link from "next/link";
 import Pusher from "pusher";
+import { getUserEmail, emailFreelancerBidAccepted } from "@/lib/email";
 
 const pusher = new Pusher({
   appId:   process.env.PUSHER_APP_ID!,
@@ -105,6 +106,17 @@ export default async function BidPaymentSuccessPage({
       });
     } catch (err) {
       console.warn("Pusher notification failed (non-fatal):", err);
+    }
+
+    // Email the hired freelancer
+    const freelancer = await getUserEmail(freelancerId);
+    if (freelancer) {
+      await emailFreelancerBidAccepted(
+        freelancer.email, freelancer.name,
+        jobTitle,
+        bid.amount,
+        bid.deliveryDays ?? 7,
+      );
     }
   }
 

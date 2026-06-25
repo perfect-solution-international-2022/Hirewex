@@ -8,6 +8,7 @@ import {
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { eq, and, sql } from "drizzle-orm";
+import { getUserEmail, emailFreelancerPaymentReleased } from "@/lib/email";
 import Pusher from "pusher";
 
 const pusher = new Pusher({
@@ -137,6 +138,12 @@ export async function releasePaymentAction(
       await pusher.trigger(`user-${submission.freelancerId}`, "notification", notifPayload);
     } catch (err) {
       console.warn("Pusher failed (non-fatal):", err);
+    }
+
+    // Email the freelancer
+    const freelancer = await getUserEmail(submission.freelancerId);
+    if (freelancer) {
+      await emailFreelancerPaymentReleased(freelancer.email, freelancer.name, contextTitle, netAmount);
     }
 
     revalidatePath("/admin/payments");

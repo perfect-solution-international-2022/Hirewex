@@ -3,6 +3,7 @@ import { serviceOrders, freelancerServices } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { notifications } from "@/drizzle/schema";
 import Pusher from "pusher";
+import { getUserEmail, emailFreelancerNewOrder } from "@/lib/email";
 import Link from "next/link";
 
 const pusher = new Pusher({
@@ -92,6 +93,15 @@ export default async function CheckoutSuccessPage({
         });
       } catch (err) {
         console.warn("Failed to notify freelancer of new order (non-fatal):", err);
+      }
+
+      // Email the freelancer
+      const freelancer = await getUserEmail(order.freelancerId);
+      if (freelancer) {
+        await emailFreelancerNewOrder(
+          freelancer.email, freelancer.name,
+          serviceTitle, order.price, order.tier,
+        );
       }
     }
   }
