@@ -70,7 +70,7 @@ export const freelancerNav = [
   {
     label: "Earnings",
     items: [
-      { title: "Withdraw",      url: "/freelancer/withdraw",      icon: ArrowDownToLine },
+      { title: "Wallet",        url: "/freelancer/wallet",        icon: Wallet },
       { title: "Transactions",  url: "/freelancer/transactions",  icon: Receipt },
     ],
   },
