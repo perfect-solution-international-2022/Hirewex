@@ -469,6 +469,29 @@ export const projectSubmissions = mysqlTable("project_submissions", {
   primaryKey({ columns: [table.id], name: "project_submissions_id" }),
 ]);
 
+export const refundRequests = mysqlTable("refund_requests", {
+  id: varchar({ length: 36 }).default(sql`(uuid())`).notNull(),
+  type: mysqlEnum("rr_type", ["late_delivery"]).notNull(),
+  projectId: varchar("project_id", { length: 36 }).references(() => projects.id, { onDelete: "cascade" }),
+  serviceOrderId: varchar("service_order_id", { length: 36 }).references(() => serviceOrders.id, { onDelete: "cascade" }),
+  buyerId: varchar("buyer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  freelancerId: varchar("freelancer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+  reason: text().notNull(),
+  refundAmount: decimal("refund_amount", { precision: 12, scale: 2 }).notNull(),
+  serviceFeeRetained: decimal("service_fee_retained", { precision: 12, scale: 2 }).default("0.00"),
+  status: mysqlEnum("rr_status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  adminNote: text("admin_note"),
+  createdAt: datetime("created_at", { mode: "string" }).default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  processedAt: datetime("processed_at", { mode: "string" }),
+}, (table) => [
+  primaryKey({ columns: [table.id], name: "refund_requests_pk" }),
+  index("idx_rr_buyer").on(table.buyerId),
+  index("idx_rr_freelancer").on(table.freelancerId),
+  index("idx_rr_status").on(table.status),
+  index("idx_rr_project").on(table.projectId),
+  index("idx_rr_order").on(table.serviceOrderId),
+]);
+
 export const kycApplications = mysqlTable("kyc_applications", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
   userId: varchar("user_id", { length: 255 }).notNull().references(() => users.id, { onDelete: "cascade" }),

@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { serviceOrders, users, freelancerServices, projectSubmissions } from "@/drizzle/schema";
+import { serviceOrders, users, freelancerServices, projectSubmissions, refundRequests } from "@/drizzle/schema";
 import { eq, desc, and, sum, isNotNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
@@ -16,7 +16,7 @@ export default async function FreelancerOrdersPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth");
 
-  const [orders, [released]] = await Promise.all([
+  const [orders, [released], myRefunds] = await Promise.all([
     db
       .select({
         id: serviceOrders.id,
@@ -50,16 +50,31 @@ export default async function FreelancerOrdersPage() {
         eq(projectSubmissions.type, "order"),
         isNotNull(projectSubmissions.paymentReleasedAt),
       )),
+
+    db
+      .select()
+      .from(refundRequests)
+      .where(eq(refundRequests.freelancerId, session.user.id))
+      .orderBy(desc(refundRequests.createdAt)),
   ]);
 
   // Money held = sum of all active order prices (buyer paid, admin hasn't released)
   const heldAmount = orders.reduce((s, o) => s + Number(o.price), 0);
   const earnedAmount = Number(released?.total ?? 0);
 
+  const refundByOrder = Object.fromEntries(
+    myRefunds.filter(r => r.serviceOrderId).map(r => [r.serviceOrderId!, r])
+  );
+
   return (
     <DashboardShell title="My Orders" role="freelancer">
       <div className="mx-auto w-full max-w-6xl">
-        <OrdersClient initialOrders={orders} heldAmount={heldAmount} earnedAmount={earnedAmount} />
+        <OrdersClient
+          initialOrders={orders}
+          heldAmount={heldAmount}
+          earnedAmount={earnedAmount}
+          refundByOrder={refundByOrder}
+        />
       </div>
     </DashboardShell>
   );

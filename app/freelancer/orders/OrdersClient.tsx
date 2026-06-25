@@ -9,8 +9,38 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Search, Package, DollarSign, Clock,
-  CheckCircle2, ChevronRight, ImageIcon
+  CheckCircle2, ChevronRight, ImageIcon, AlertTriangle,
 } from "lucide-react";
+
+type RefundRecord = {
+  id: string; status: string; reason: string;
+  refundAmount: string; serviceFeeRetained: string | null;
+  adminNote: string | null;
+};
+
+function RefundBanner({ refund }: { refund: RefundRecord }) {
+  const cls =
+    refund.status === "approved" ? "bg-red-50 border-red-300 text-red-800 dark:bg-red-900/10 dark:border-red-700 dark:text-red-300"
+    : refund.status === "rejected" ? "bg-muted border-border text-foreground"
+    : "bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-900/10 dark:border-amber-700 dark:text-amber-300";
+  const label =
+    refund.status === "approved" ? "Refund Approved — Payment Returned to Buyer"
+    : refund.status === "rejected" ? "Refund Request Rejected by Admin"
+    : "Refund Pending Admin Review";
+
+  return (
+    <div className={`rounded-lg border px-4 py-3 text-sm space-y-1 ${cls}`}>
+      <p className="font-semibold flex items-center gap-1.5">
+        <AlertTriangle className="h-4 w-4 shrink-0" /> {label}
+      </p>
+      <p className="opacity-90">{refund.reason}</p>
+      <p className="text-xs opacity-75">
+        Refund: ${Number(refund.refundAmount).toFixed(2)} · Service fee retained: ${Number(refund.serviceFeeRetained ?? 0).toFixed(2)}
+      </p>
+      {refund.adminNote && <p className="text-xs opacity-75">Admin note: {refund.adminNote}</p>}
+    </div>
+  );
+}
 
 function formatDate(d: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(d));
@@ -27,7 +57,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   },
 };
 
-export function OrdersClient({ initialOrders, heldAmount, earnedAmount }: { initialOrders: any[]; heldAmount: number; earnedAmount: number }) {
+export function OrdersClient({ initialOrders, heldAmount, earnedAmount, refundByOrder = {} }: { initialOrders: any[]; heldAmount: number; earnedAmount: number; refundByOrder?: Record<string, RefundRecord> }) {
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -97,6 +127,7 @@ export function OrdersClient({ initialOrders, heldAmount, earnedAmount }: { init
           {filtered.map((order) => {
             const buyerName = order.buyerDisplayName || order.buyerName || "Guest User";
             const buyerAvatar = order.buyerAvatarUrl || order.buyerImage || "";
+            const refund = refundByOrder[order.id] ?? null;
 
             let coverImage = "";
             try {
@@ -105,7 +136,8 @@ export function OrdersClient({ initialOrders, heldAmount, earnedAmount }: { init
             } catch {}
 
             return (
-              <Link key={order.id} href={`/freelancer/orders/${order.id}`}>
+              <div key={order.id} className="space-y-2">
+              <Link href={`/freelancer/orders/${order.id}`}>
                 <Card className="group border-border/50 hover:border-primary/30 transition-all shadow-sm">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-4">
@@ -167,6 +199,8 @@ export function OrdersClient({ initialOrders, heldAmount, earnedAmount }: { init
                   </CardContent>
                 </Card>
               </Link>
+              {refund && <RefundBanner refund={refund} />}
+              </div>
             );
           })}
         </div>

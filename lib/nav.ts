@@ -7,7 +7,7 @@ import {
   Settings, FileBadge, Image as ImageIcon, Globe, Bell,
   CreditCard, Languages, Shield,
   ClipboardCheck, PartyPopper, Search, ClipboardList, ArrowRightLeft,
-  Send, FolderKanban, ShoppingBag, PlusCircle, Inbox, UserCheck,
+  Send, FolderKanban, ShoppingBag, PlusCircle, Inbox, UserCheck, RotateCcw,
 } from "lucide-react";
 
 export const buyerNav = [
@@ -112,6 +112,7 @@ export const adminNav = [
   { label: "Finance", items: [
     { title: "Wallet", url: "/admin/wallet", icon: Wallet },
     { title: "Payment Release", url: "/admin/payments", icon: ArrowRightLeft },
+    { title: "Refund Requests", url: "/admin/refunds", icon: RotateCcw },
     { title: "Transactions", url: "/admin/transactions", icon: Receipt },
   ]},
   { label: "System", items: [

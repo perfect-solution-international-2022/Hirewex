@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   CheckCircle2, XCircle, RotateCcw, Link2, FileText,
-  Download, Calendar, ClipboardList, Briefcase, Package, AlertTriangle, Star, MessageSquare,
+  Download, Calendar, ClipboardList, Briefcase, Package, AlertTriangle, Star, MessageSquare, Clock,
 } from "lucide-react";
 import { reviewSubmissionAction } from "@/app/actions/projects";
 import { submitReviewAction } from "@/app/actions/reviews";
@@ -265,15 +265,51 @@ function SubmissionActionDialog({
   );
 }
 
+type RefundRecord = {
+  id: string; status: string; reason: string;
+  refundAmount: string; serviceFeeRetained: string | null;
+  createdAt: string; adminNote: string | null;
+};
+
+function RefundBanner({ refund }: { refund: RefundRecord }) {
+  const statusMap = {
+    pending:  { label: "Refund Pending Admin Review", cls: "bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-900/10 dark:border-amber-700 dark:text-amber-300", Icon: Clock },
+    approved: { label: "Refund Approved",             cls: "bg-emerald-50 border-emerald-300 text-emerald-800 dark:bg-emerald-900/10 dark:border-emerald-700 dark:text-emerald-300", Icon: CheckCircle2 },
+    rejected: { label: "Refund Rejected",             cls: "bg-red-50 border-red-300 text-red-800 dark:bg-red-900/10 dark:border-red-700 dark:text-red-300", Icon: XCircle },
+  } as const;
+  const s = statusMap[refund.status as keyof typeof statusMap] ?? statusMap.pending;
+  const { Icon } = s;
+
+  return (
+    <div className={`rounded-lg border px-4 py-3 text-sm space-y-1 ${s.cls}`}>
+      <div className="flex items-center gap-2 font-semibold">
+        <Icon className="h-4 w-4 shrink-0" />
+        {s.label}
+        <span className="ml-auto font-normal text-xs opacity-80">
+          Refund: ${Number(refund.refundAmount).toFixed(2)} · Service fee ${Number(refund.serviceFeeRetained ?? 0).toFixed(2)} retained
+        </span>
+      </div>
+      <p className="opacity-90">{refund.reason}</p>
+      {refund.adminNote && (
+        <p className="opacity-75 text-xs">Admin note: {refund.adminNote}</p>
+      )}
+    </div>
+  );
+}
+
 // ── Main client ─────────────────────────────────────────────────────────────────
 export function SubmittedWorkClient({
   submissions,
   reviewedProjectIds,
   reviewedOrderIds,
+  refundByProject = {},
+  refundByOrder   = {},
 }: {
   submissions:        any[];
   reviewedProjectIds: string[];
   reviewedOrderIds:   string[];
+  refundByProject?:   Record<string, RefundRecord>;
+  refundByOrder?:     Record<string, RefundRecord>;
 }) {
   const [dialogState,  setDialogState]  = useState<{ item: any; action: ReviewAction } | null>(null);
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
@@ -333,6 +369,8 @@ export function SubmittedWorkClient({
           <SubmissionList
             items={pending}
             reviewedCheck={isReviewed}
+            refundByProject={refundByProject}
+            refundByOrder={refundByOrder}
             onAction={(item, action) => setDialogState({ item, action })}
             onReview={(item) => {
               const type  = item.submission.type;
@@ -356,6 +394,8 @@ export function SubmittedWorkClient({
           <SubmissionList
             items={reviewed}
             reviewedCheck={isReviewed}
+            refundByProject={refundByProject}
+            refundByOrder={refundByOrder}
             onAction={() => {}}
             onReview={(item) => {
               const type  = item.submission.type;
@@ -391,17 +431,22 @@ export function SubmittedWorkClient({
 }
 
 function SubmissionList({
-  items, reviewedCheck, onAction, onReview,
+  items, reviewedCheck, refundByProject, refundByOrder, onAction, onReview,
 }: {
-  items:         any[];
-  reviewedCheck: (item: any) => boolean;
-  onAction:      (item: any, action: ReviewAction) => void;
-  onReview:      (item: any) => void;
+  items:            any[];
+  reviewedCheck:    (item: any) => boolean;
+  refundByProject:  Record<string, RefundRecord>;
+  refundByOrder:    Record<string, RefundRecord>;
+  onAction:         (item: any, action: ReviewAction) => void;
+  onReview:         (item: any) => void;
 }) {
   return (
     <div className="grid gap-4">
       {items.map((row) => {
         const { submission, job, service, freelancer } = row;
+        const refund = (submission.projectId && refundByProject[submission.projectId])
+          || (submission.serviceOrderId && refundByOrder[submission.serviceOrderId])
+          || null;
         const name      = freelancer?.displayName || freelancer?.name || "Freelancer";
         const avatar    = freelancer?.avatarUrl || freelancer?.image || "";
         const status    = submission.status as keyof typeof statusConfig;
@@ -478,6 +523,9 @@ function SubmissionList({
                   <p className="text-foreground">{submission.buyerNote}</p>
                 </div>
               )}
+
+              {/* Refund banner */}
+              {refund && <RefundBanner refund={refund} />}
 
               {/* Actions */}
               {isPending && (

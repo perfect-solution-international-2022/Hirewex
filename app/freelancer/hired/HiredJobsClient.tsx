@@ -16,7 +16,7 @@ import {
 import {
   Briefcase, Clock, DollarSign, CheckCircle2,
   MessageCircle, PartyPopper, Calendar, Upload, Link2,
-  FileText, X, Send, RotateCcw,
+  FileText, X, Send, RotateCcw, AlertTriangle,
 } from "lucide-react";
 import { submitWorkAction } from "@/app/actions/projects";
 
@@ -185,7 +185,34 @@ function SubmitWorkDialog({
   );
 }
 
-export function HiredJobsClient({ hiredJobs }: { hiredJobs: any[] }) {
+type RefundRecord = {
+  id: string; status: string; reason: string;
+  refundAmount: string; serviceFeeRetained: string | null;
+  adminNote: string | null; createdAt: string;
+};
+
+function RefundBanner({ refund }: { refund: RefundRecord }) {
+  const s = refund.status === "approved"
+    ? { label: "Refund Approved — Payment Returned to Buyer", cls: "bg-red-50 border-red-300 text-red-800 dark:bg-red-900/10 dark:border-red-700 dark:text-red-300" }
+    : refund.status === "rejected"
+    ? { label: "Refund Request Rejected by Admin",            cls: "bg-muted border-border text-foreground" }
+    : { label: "Refund Pending Admin Review",                  cls: "bg-amber-50 border-amber-300 text-amber-800 dark:bg-amber-900/10 dark:border-amber-700 dark:text-amber-300" };
+
+  return (
+    <div className={`mt-4 rounded-lg border px-4 py-3 text-sm space-y-1 ${s.cls}`}>
+      <p className="font-semibold flex items-center gap-1.5">
+        <AlertTriangle className="h-4 w-4 shrink-0" /> {s.label}
+      </p>
+      <p className="opacity-90">{refund.reason}</p>
+      <p className="text-xs opacity-75">
+        Refund amount: ${Number(refund.refundAmount).toFixed(2)} · Service fee retained: ${Number(refund.serviceFeeRetained ?? 0).toFixed(2)}
+      </p>
+      {refund.adminNote && <p className="text-xs opacity-75">Admin note: {refund.adminNote}</p>}
+    </div>
+  );
+}
+
+export function HiredJobsClient({ hiredJobs, refundByProject = {} }: { hiredJobs: any[]; refundByProject?: Record<string, RefundRecord> }) {
   const [openDialogBidId, setOpenDialogBidId] = useState<string | null>(null);
 
   if (hiredJobs.length === 0) {
@@ -231,6 +258,7 @@ export function HiredJobsClient({ hiredJobs }: { hiredJobs: any[] }) {
           const buyerAvatar = buyer?.avatarUrl || buyer?.image || "";
           const projectStatus = project?.status ?? "active";
           const isOpen = openDialogBidId === bid.id;
+          const refund = project ? refundByProject[project.id] ?? null : null;
 
           return (
             <Card key={bid.id} className="border-emerald-200 dark:border-emerald-900 bg-emerald-50/30 dark:bg-emerald-900/5 shadow-sm overflow-hidden">
@@ -324,6 +352,12 @@ export function HiredJobsClient({ hiredJobs }: { hiredJobs: any[] }) {
                   </div>
                 </div>
               </CardContent>
+
+              {refund && (
+                <div className="px-6 pb-5">
+                  <RefundBanner refund={refund} />
+                </div>
+              )}
 
               <SubmitWorkDialog
                 bidId={bid.id}
