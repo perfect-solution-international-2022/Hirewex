@@ -75,16 +75,18 @@ export default async function ChatRoomPage({
   return (
     <div className="flex h-screen flex-col bg-background overflow-hidden">
       <SiteHeader />
-      <main className="flex-1 overflow-hidden">
-        <ChatClient
-          conversationId={conversationId}
-          initialMessages={chatHistory}
-          otherUser={{
-            name: otherUser?.name || "Unknown User",
-            email: otherUser?.email || "No email",
-            avatarUrl: otherUser?.avatarUrl || null,
-          }}
-        />
+      <main className="flex-1 overflow-hidden flex justify-center">
+        <div className="w-full max-w-3xl flex flex-col overflow-hidden">
+          <ChatClient
+            conversationId={conversationId}
+            initialMessages={chatHistory}
+            otherUser={{
+              name: otherUser?.name || "Unknown User",
+              email: otherUser?.email || "No email",
+              avatarUrl: otherUser?.avatarUrl || null,
+            }}
+          />
+        </div>
       </main>
     </div>
   );
