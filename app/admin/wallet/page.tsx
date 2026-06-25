@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
-import { transactions, projectSubmissions, projects, serviceOrders } from "@/drizzle/schema";
+import { transactions, projectSubmissions } from "@/drizzle/schema";
 import { eq, isNull, and, sql, count } from "drizzle-orm";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, ArrowDownToLine, ArrowUpFromLine, DollarSign, Clock, TrendingUp, Banknote } from "lucide-react";
+import { Wallet, ArrowUpFromLine, Clock, TrendingUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin Wallet — Hirewex" };
@@ -37,11 +37,8 @@ export default async function AdminWalletPage() {
   const [[totals], [pendingCount], recentFees] = await Promise.all([
     // Aggregate all transaction amounts by type in one query
     db.select({
-      totalDeposits:    sql<number>`COALESCE(SUM(CASE WHEN type = 'deposit'    THEN amount ELSE 0 END), 0)`,
-      totalWithdrawals: sql<number>`COALESCE(SUM(CASE WHEN type = 'withdrawal' THEN amount ELSE 0 END), 0)`,
-      totalEscrow:      sql<number>`COALESCE(SUM(CASE WHEN type = 'escrow'     THEN amount ELSE 0 END), 0)`,
-      totalReleased:    sql<number>`COALESCE(SUM(CASE WHEN type = 'release'    THEN amount ELSE 0 END), 0)`,
-      totalFees:        sql<number>`COALESCE(SUM(CASE WHEN type = 'fee'        THEN amount ELSE 0 END), 0)`,
+      totalReleased: sql<number>`COALESCE(SUM(CASE WHEN type = 'release' THEN amount ELSE 0 END), 0)`,
+      totalFees:     sql<number>`COALESCE(SUM(CASE WHEN type = 'fee'     THEN amount ELSE 0 END), 0)`,
     }).from(transactions),
 
     // Count submissions accepted by buyer but not yet released by admin
@@ -57,17 +54,7 @@ export default async function AdminWalletPage() {
       .limit(20),
   ]);
 
-  const held = Number(totals.totalEscrow) - Number(totals.totalReleased);
-
   const stats = [
-    {
-      label: "Held in Escrow",
-      value: `$${fmt(held < 0 ? 0 : held)}`,
-      sub: "Buyer payments awaiting release",
-      icon: Wallet,
-      color: "text-amber-600",
-      bg: "bg-amber-50 dark:bg-amber-900/20",
-    },
     {
       label: "Pending Payouts",
       value: String(pendingCount.value),
@@ -91,22 +78,6 @@ export default async function AdminWalletPage() {
       icon: ArrowUpFromLine,
       color: "text-blue-600",
       bg: "bg-blue-50 dark:bg-blue-900/20",
-    },
-    {
-      label: "Total Deposits",
-      value: `$${fmt(Number(totals.totalDeposits))}`,
-      sub: "Deposited by buyers",
-      icon: ArrowDownToLine,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50 dark:bg-emerald-900/20",
-    },
-    {
-      label: "Total Withdrawn",
-      value: `$${fmt(Number(totals.totalWithdrawals))}`,
-      sub: "Withdrawn by freelancers",
-      icon: Banknote,
-      color: "text-red-600",
-      bg: "bg-red-50 dark:bg-red-900/20",
     },
   ];
 

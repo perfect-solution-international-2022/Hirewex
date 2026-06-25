@@ -1,21 +1,23 @@
 import { db } from "@/lib/db";
-import { users, jobs, bids, projects } from "@/drizzle/schema";
-import { count } from "drizzle-orm";
+import { users, jobs, bids, projects, transactions } from "@/drizzle/schema";
+import { count, sql } from "drizzle-orm";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card } from "@/components/ui/card";
-import { LayoutDashboard } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 export const metadata = {
   title: "Admin — Hirewex",
 };
 
 export default async function AdminPage() {
-  // Fetch live stats
-  const [userCountRes, jobCountRes, bidCountRes, projectCountRes] = await Promise.all([
+  const [userCountRes, jobCountRes, bidCountRes, projectCountRes, [earnings]] = await Promise.all([
     db.select({ value: count() }).from(users),
     db.select({ value: count() }).from(jobs),
     db.select({ value: count() }).from(bids),
     db.select({ value: count() }).from(projects),
+    db.select({
+      totalFees: sql<number>`COALESCE(SUM(CASE WHEN type = 'fee' THEN amount ELSE 0 END), 0)`,
+    }).from(transactions),
   ]);
 
   const realStats = {
@@ -25,15 +27,16 @@ export default async function AdminPage() {
     projects: projectCountRes[0].value,
   };
 
+  const platformEarnings = Number(earnings.totalFees);
+
   return (
-    // FIXED: Removed the groups={groups} prop! DashboardShell handles it now.
     <DashboardShell title="Admin Panel" role="admin">
       <div className="grid gap-4 md:grid-cols-4">
         {[
-          ["Total users", realStats.users],
+          ["Total Users", realStats.users],
           ["Jobs", realStats.jobs],
           ["Bids", realStats.bids],
-          ["Projects", realStats.projects]
+          ["Projects", realStats.projects],
         ].map(([l, v]) => (
           <Card key={l as string} className="p-5 flex flex-col justify-center">
             <p className="text-3xl font-bold text-primary mb-1">{v ?? 0}</p>
@@ -41,12 +44,21 @@ export default async function AdminPage() {
           </Card>
         ))}
       </div>
-      
-      <Card className="mt-6 p-8 text-center text-muted-foreground border-dashed">
-        <LayoutDashboard className="h-8 w-8 mx-auto mb-3 opacity-20" />
-        <p>Admin command center.</p> 
-        <p className="text-sm mt-1">Live data is now connected to your MySQL instance.</p>
-      </Card>
+
+      <div className="mt-4">
+        <Card className="p-5 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
+            <TrendingUp className="h-6 w-6 text-purple-600" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Platform Earnings</p>
+            <p className="text-3xl font-bold tracking-tight text-purple-600">
+              ${platformEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">Total commission + service fees collected</p>
+          </div>
+        </Card>
+      </div>
     </DashboardShell>
   );
 }
