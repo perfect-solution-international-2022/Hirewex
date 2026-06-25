@@ -96,20 +96,20 @@ export const freelancerNav = [
 
 export const adminNav = [
   { label: "Overview", items: [
-    { title: "Dashboard", url: "/admin", icon: LayoutDashboard }, 
-    { title: "Reports", url: "/admin/reports", icon: BarChart3 }
+    { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  ]},
+  { label: "Users", items: [
+    { title: "Freelancers", url: "/admin/freelancers", icon: UserCog },
+    { title: "Buyers", url: "/admin/buyers", icon: UsersIcon },
+    { title: "KYC Verification", url: "/admin/kyc", icon: Shield },
   ]},
   { label: "Catalog", items: [
-    { title: "Categories", url: "/admin/categories", icon: Tags },
     { title: "Jobs", url: "/admin/jobs", icon: Briefcase },
     { title: "Bids", url: "/admin/bids", icon: FileText },
     { title: "Services", url: "/admin/services", icon: Briefcase },
     { title: "Service Approval", url: "/admin/service-approval", icon: ClipboardCheck },
     { title: "Job Approval", url: "/admin/job-approval", icon: ClipboardCheck },
-  ]},
-  { label: "Users", items: [
-    { title: "Freelancers", url: "/admin/freelancers", icon: UserCog },
-    { title: "Buyers", url: "/admin/buyers", icon: UsersIcon },
+    { title: "Categories", url: "/admin/categories", icon: Tags },
   ]},
   { label: "Finance", items: [
     { title: "Wallet", url: "/admin/wallet", icon: Wallet },
@@ -119,7 +119,6 @@ export const adminNav = [
   { label: "System", items: [
     { title: "General Settings", url: "/admin/settings", icon: Settings },
     { title: "Logo & Favicon", url: "/admin/branding", icon: ImageIcon },
-    { title: "KYC", url: "/admin/kyc", icon: Shield },
     { title: "Policies", url: "/admin/policies", icon: FileText },
   ]},
 ];
