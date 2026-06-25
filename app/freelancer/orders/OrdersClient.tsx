@@ -27,7 +27,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   },
 };
 
-export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
+export function OrdersClient({ initialOrders, heldAmount, earnedAmount }: { initialOrders: any[]; heldAmount: number; earnedAmount: number }) {
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -40,8 +40,6 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
     });
   }, [initialOrders, search]);
 
-  const totalEarnings = initialOrders.reduce((sum, o) => sum + parseFloat(o.price), 0);
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -52,12 +50,12 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
         </div>
         <div className="flex gap-3">
           <div className="rounded-xl border border-border/60 bg-card px-4 py-2.5 shadow-sm">
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-semibold">Total Earned</p>
-            <p className="text-lg font-bold text-foreground">${totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-semibold">Money Held</p>
+            <p className="text-lg font-bold text-amber-600">${heldAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
           </div>
           <div className="rounded-xl border border-border/60 bg-card px-4 py-2.5 shadow-sm">
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-semibold">Total Orders</p>
-            <p className="text-lg font-bold text-foreground">{initialOrders.length}</p>
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-semibold">Total Earned</p>
+            <p className="text-lg font-bold text-emerald-600">${earnedAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
           </div>
         </div>
       </div>

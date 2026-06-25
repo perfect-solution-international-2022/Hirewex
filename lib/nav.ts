@@ -106,17 +106,16 @@ export const adminNav = [
     { title: "Services", url: "/admin/services", icon: Briefcase },
     { title: "Service Approval", url: "/admin/service-approval", icon: ClipboardCheck },
     { title: "Job Approval", url: "/admin/job-approval", icon: ClipboardCheck },
-    { title: "Hired Jobs", url: "/freelancer/hired", icon: PartyPopper },
   ]},
   { label: "Users", items: [
     { title: "Freelancers", url: "/admin/freelancers", icon: UserCog },
     { title: "Buyers", url: "/admin/buyers", icon: UsersIcon },
-    { title: "Bids", url: "/admin/bids", icon: FileText },
   ]},
   { label: "Finance", items: [
+    { title: "Wallet", url: "/admin/wallet", icon: Wallet },
     { title: "Payment Release", url: "/admin/payments", icon: ArrowRightLeft },
     { title: "Transactions", url: "/admin/transactions", icon: Receipt },
-    { title: "Deposits", url: "/admin/deposits", icon: Wallet },
+    { title: "Deposits", url: "/admin/deposits", icon: Receipt },
     { title: "Withdrawals", url: "/admin/withdrawals", icon: ArrowDownToLine },
   ]},
   { label: "Support", items: [
