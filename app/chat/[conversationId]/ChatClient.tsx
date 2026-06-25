@@ -129,7 +129,7 @@ export function ChatClient({
     <div className="flex flex-col h-full bg-background border-x border-border/40 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/60 bg-card/50 shadow-sm z-10">
-        <Link href="/chat" className="md:hidden text-muted-foreground"><ArrowLeft className="h-5 w-5" /></Link>
+        <Link href="/chat" className="text-muted-foreground hover:text-foreground transition-colors"><ArrowLeft className="h-5 w-5" /></Link>
         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-border/50 shrink-0">
           {otherUser.avatarUrl
             ? <img src={otherUser.avatarUrl} className="h-full w-full object-cover" />

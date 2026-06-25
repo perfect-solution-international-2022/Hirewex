@@ -136,12 +136,6 @@ export function InboxClient({
     return d.toLocaleDateString([], { month: "short", day: "numeric" });
   };
 
-  const handleClearInbox = () => {
-    if (confirm("TESTING: Clear inbox locally? (Refresh to restore)")) {
-      setChats([]);
-    }
-  };
-
   return (
     <div className="flex flex-col h-full bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
 
@@ -157,15 +151,7 @@ export function InboxClient({
             )}
           </div>
           
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">{chats.length} conversation{chats.length !== 1 ? "s" : ""}</span>
-            <button 
-              onClick={handleClearInbox}
-              className="text-[10px] font-semibold text-destructive hover:bg-destructive/10 px-2 py-1 rounded transition-colors"
-            >
-              Clear (Test)
-            </button>
-          </div>
+          <span className="text-xs text-muted-foreground">{chats.length} conversation{chats.length !== 1 ? "s" : ""}</span>
         </div>
 
         {/* Search */}
