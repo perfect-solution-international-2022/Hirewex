@@ -126,7 +126,7 @@ export function ChatClient({
     dateStr ? new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-background border border-border/60 rounded-xl overflow-hidden shadow-sm">
+    <div className="flex flex-col h-full bg-background border-t border-border/60 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/60 bg-card/50 shadow-sm z-10">
         <Link href="/chat" className="md:hidden text-muted-foreground"><ArrowLeft className="h-5 w-5" /></Link>

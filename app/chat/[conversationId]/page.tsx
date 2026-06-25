@@ -71,18 +71,14 @@ export default async function ChatRoomPage({
     .where(eq(messages.conversationId, conversationId))
     .orderBy(asc(messages.createdAt)); 
 
-  // 7. Render the Chat Room
+  // 7. Render the Chat Room — full-viewport, no footer
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col bg-background overflow-hidden">
       <SiteHeader />
-      
-      {/* Container holding the ChatClient */}
-      <main className="container mx-auto p-4 md:p-6 max-w-4xl flex-1 flex flex-col h-full">
-        <ChatClient 
-          conversationId={conversationId} 
-          initialMessages={chatHistory} 
-          
-          // Pass the other user's data down to your Client Component
+      <main className="flex-1 overflow-hidden">
+        <ChatClient
+          conversationId={conversationId}
+          initialMessages={chatHistory}
           otherUser={{
             name: otherUser?.name || "Unknown User",
             email: otherUser?.email || "No email",
@@ -90,8 +86,6 @@ export default async function ChatRoomPage({
           }}
         />
       </main>
-
-      <SiteFooter />
     </div>
   );
 }
