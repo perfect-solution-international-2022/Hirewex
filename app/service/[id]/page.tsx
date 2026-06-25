@@ -167,7 +167,6 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
   };
 
   // JSON-LD structured data
-  const packages = service.packages as any;
   const lowestPrice = packages?.basic?.price || packages?.standard?.price || packages?.premium?.price;
   const jsonLd = {
     "@context": "https://schema.org",
