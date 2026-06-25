@@ -3,66 +3,53 @@
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { freelancerNav } from "@/lib/nav";
 import Link from "next/link";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
 import {
-  TrendingUp, TrendingDown, Briefcase, Clock, DollarSign, Star,
-  ArrowUpRight, MoreHorizontal, CheckCircle2, AlertCircle, Calendar,
-  Search, ArrowRight,
+  TrendingUp, Briefcase, Clock, DollarSign, Star,
+  ArrowUpRight, CheckCircle2, AlertCircle, Calendar,
+  Search, ArrowRight, Package, Inbox,
 } from "lucide-react";
 
-// Kept your other hardcoded demo data arrays here...
-const earningsData = [
-  { month: "Jan", earnings: 1200, target: 1500 },
-  { month: "Feb", earnings: 1800, target: 1500 },
-  { month: "Mar", earnings: 1500, target: 1600 },
-  { month: "Apr", earnings: 2200, target: 1700 },
-  { month: "May", earnings: 1950, target: 1800 },
-  { month: "Jun", earnings: 2600, target: 2000 },
-];
-
-const weeklyActivityData = [
-  { day: "Mon", hours: 5.5 },
-  { day: "Tue", hours: 7 },
-  { day: "Wed", hours: 6.2 },
-  { day: "Thu", hours: 8 },
-  { day: "Fri", hours: 4.5 },
-  { day: "Sat", hours: 2 },
-  { day: "Sun", hours: 0.5 },
-];
-
-const recentActivity = [
-  { id: 1, title: "E-commerce website redesign", client: "Nimal Perera", status: "completed", amount: "USD 45,000", date: "2 hours ago" },
-  { id: 2, title: "Mobile app UI/UX consultation", client: "TechVantage Lanka", status: "in_progress", amount: "USD 28,500", date: "Yesterday" },
-  { id: 3, title: "Logo & brand identity package", client: "Coastal Brews Co.", status: "pending", amount: "USD 15,000", date: "2 days ago" },
-  { id: 4, title: "WordPress maintenance retainer", client: "Sanjeewa Fonseka", status: "completed", amount: "USD 8,000", date: "3 days ago" },
-];
-
-const upcomingDeadlines = [
-  { id: 1, title: "Submit homepage wireframes", client: "TechVantage Lanka", due: "Tomorrow, 5:00 PM" },
-  { id: 2, title: "Final asset delivery", client: "Coastal Brews Co.", due: "In 3 days" },
-  { id: 3, title: "Client review call", client: "Nimal Perera", due: "Jun 18, 10:00 AM" },
-];
-
 const statusStyles: Record<string, { label: string; className: string; icon: any }> = {
-  completed:   { label: "Completed",  className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900", icon: CheckCircle2 },
-  in_progress: { label: "In Progress", className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900",   icon: Clock },
+  completed:   { label: "Completed",   className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900",   icon: CheckCircle2 },
+  in_progress: { label: "In Progress", className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900",     icon: Clock },
   pending:     { label: "Pending",     className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900", icon: AlertCircle },
+  submitted:   { label: "Submitted",   className: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-900", icon: Package },
 };
 
-// --- ACCEPT PROPS HERE ---
-export default function FreelancerDashboardClient({ projectStatusData }: { projectStatusData: any[] }) {
-  
-  const totalEarnings = earningsData.reduce((sum, m) => sum + m.earnings, 0);
-  
-  // Dynamically calculate the total based on the database data!
-  const totalProjects = projectStatusData[0]?.name === "No Services" 
-    ? 0 
-    : projectStatusData.reduce((sum, p) => sum + p.value, 0);
+interface Props {
+  projectStatusData: { name: string; value: number; color: string }[];
+  totalEarnings: number;
+  activeBidCount: number;
+  rating: string | null;
+  reviewCount: number;
+  monthlyEarnings: { month: string; earnings: number }[];
+  weekActivity: { day: string; orders: number; revenue: number }[];
+  recentActivity: { id: string; title: string; client: string; status: string; amount: string; date: string }[];
+  upcomingDeadlines: { id: string; title: string; client: string; due: string }[];
+}
+
+export default function FreelancerDashboardClient({
+  projectStatusData,
+  totalEarnings,
+  activeBidCount,
+  rating,
+  reviewCount,
+  monthlyEarnings,
+  weekActivity,
+  recentActivity,
+  upcomingDeadlines,
+}: Props) {
+  const totalServices = projectStatusData[0]?.name === "No Services"
+    ? 0
+    : projectStatusData.reduce((s, p) => s + p.value, 0);
+
+  const hasEarnings = monthlyEarnings.some((m) => m.earnings > 0);
+  const hasActivity = weekActivity.some((d) => d.orders > 0);
 
   return (
     <DashboardShell title="Freelancer" role="freelancer">
@@ -72,26 +59,20 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard Overview</h1>
-            <p className="text-sm text-muted-foreground">Here&apos;s how your freelance business is performing this month.</p>
+            <p className="text-sm text-muted-foreground">Here&apos;s how your freelance business is performing.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Calendar className="mr-2 h-4 w-4" />
-              Last 6 months
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/freelancer/new-project" className="flex items-center">
-                <Briefcase className="mr-2 h-4 w-4" />
-                New Service
-              </Link>
-            </Button>
-          </div>
+          <Button size="sm" asChild>
+            <Link href="/freelancer/new-project" className="flex items-center">
+              <Briefcase className="mr-2 h-4 w-4" />
+              New Service
+            </Link>
+          </Button>
         </div>
 
-        {/* Stat cards — 3 cols + Find Jobs card */}
+        {/* Stat cards */}
         <div className="grid gap-4 md:grid-cols-4">
 
-          {/* Rating — moved to first/left */}
+          {/* Rating */}
           <Card className="p-5">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Rating</p>
@@ -99,13 +80,22 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                 <Star className="h-4 w-4 text-yellow-500" />
               </div>
             </div>
-            <p className="mt-2 text-2xl font-bold text-foreground">4.9 / 5.0</p>
-            <div className="mt-1 flex items-center gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className={`h-3 w-3 ${i < 5 ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/20"}`} />
-              ))}
-              <span className="ml-1 text-xs text-muted-foreground">32 reviews</span>
-            </div>
+            {rating ? (
+              <>
+                <p className="mt-2 text-2xl font-bold text-foreground">{rating} / 5.0</p>
+                <div className="mt-1 flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className={`h-3 w-3 ${i < Math.round(Number(rating)) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/20"}`} />
+                  ))}
+                  <span className="ml-1 text-xs text-muted-foreground">{reviewCount} {reviewCount === 1 ? "review" : "reviews"}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-2 text-2xl font-bold text-foreground">—</p>
+                <p className="mt-1 text-xs text-muted-foreground">No reviews yet</p>
+              </>
+            )}
           </Card>
 
           {/* Total Earnings */}
@@ -116,11 +106,10 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                 <DollarSign className="h-4 w-4 text-primary" />
               </div>
             </div>
-            <p className="mt-2 text-2xl font-bold text-foreground">USD {totalEarnings.toLocaleString()}</p>
-            <div className="mt-1 flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span>+18.2% vs last period</span>
-            </div>
+            <p className="mt-2 text-2xl font-bold text-foreground">
+              USD {totalEarnings.toLocaleString()}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">From paid service orders</p>
           </Card>
 
           {/* Active Bids */}
@@ -131,14 +120,13 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                 <Briefcase className="h-4 w-4 text-blue-500" />
               </div>
             </div>
-            <p className="mt-2 text-2xl font-bold text-foreground">7</p>
-            <div className="mt-1 flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400">
-              <TrendingDown className="h-3.5 w-3.5" />
-              <span>-2 from last week</span>
-            </div>
+            <p className="mt-2 text-2xl font-bold text-foreground">{activeBidCount}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {activeBidCount === 0 ? "No pending bids" : "Awaiting buyer response"}
+            </p>
           </Card>
 
-          {/* Find Jobs CTA card */}
+          {/* Find Jobs CTA */}
           <Card className="relative overflow-hidden p-5 bg-slate-900 dark:bg-slate-800 border-slate-800 dark:border-slate-700">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.12),_transparent_60%)]" />
             <div className="relative flex flex-col h-full justify-between gap-4">
@@ -149,15 +137,9 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                 <p className="text-base font-bold text-white leading-snug">Ready for your next project?</p>
                 <p className="mt-1 text-xs text-slate-400">Browse open jobs and place your bid.</p>
               </div>
-
-              <Button
-                asChild
-                size="sm"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-none group"
-              >
+              <Button asChild size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-none group">
                 <Link href="/jobs" className="flex items-center justify-center gap-1.5">
-                  Find Jobs
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  Find Jobs <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               </Button>
             </div>
@@ -168,45 +150,55 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
         {/* Charts row */}
         <div className="grid gap-4 lg:grid-cols-3">
 
-          {/* Earnings area chart */}
+          {/* Monthly earnings area chart */}
           <Card className="p-5 lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Earnings Overview</h2>
-                <p className="text-sm text-muted-foreground">Monthly earnings vs target</p>
+                <p className="text-sm text-muted-foreground">Monthly earnings (last 6 months)</p>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
+              {hasEarnings && (
+                <div className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  <span>USD {totalEarnings.toLocaleString()} total</span>
+                </div>
+              )}
             </div>
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={earningsData} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="earningsGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v / 1000}k`} />
-                  <Tooltip
-                    formatter={(value: any, name: any) => [`USD ${Number(value).toLocaleString()}`, name]}
-                    contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e5e7eb" }}
-                  />
-                  <Area type="monotone" dataKey="target" stroke="#cbd5e1" strokeDasharray="4 4" fill="none" strokeWidth={2} />
-                  <Area type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={2.5} fill="url(#earningsGradient)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            {hasEarnings ? (
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyEarnings} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="earningsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#10b981" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false}
+                      tickFormatter={(v) => v >= 1000 ? `${v / 1000}k` : `${v}`} />
+                    <Tooltip
+                      formatter={(v: any) => [`USD ${Number(v).toLocaleString()}`, "Earnings"]}
+                      contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e5e7eb" }}
+                    />
+                    <Area type="monotone" dataKey="earnings" stroke="#10b981" strokeWidth={2.5} fill="url(#earningsGradient)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-muted/10">
+                <DollarSign className="h-8 w-8 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">No earnings yet — complete your first order to see data here.</p>
+              </div>
+            )}
           </Card>
 
-          {/* Project status pie chart */}
+          {/* Service status pie */}
           <Card className="p-5">
             <div className="mb-4">
               <h2 className="text-base font-semibold text-foreground">Service Status</h2>
-              <p className="text-sm text-muted-foreground">{totalProjects} total services submitted</p>
+              <p className="text-sm text-muted-foreground">{totalServices} total services</p>
             </div>
             <div className="h-44 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -217,7 +209,7 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: any, name: any) => [name === "No Services" ? "0" : `${value} services`, name]}
+                    formatter={(v: any, name: any) => [name === "No Services" ? "0" : `${v}`, name]}
                     contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e5e7eb" }}
                   />
                 </PieChart>
@@ -241,26 +233,33 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
         {/* Activity row */}
         <div className="grid gap-4 lg:grid-cols-3">
 
-          {/* Weekly hours bar chart */}
+          {/* Orders this week bar chart */}
           <Card className="p-5 lg:col-span-1">
             <div className="mb-4">
-              <h2 className="text-base font-semibold text-foreground">Weekly Activity</h2>
-              <p className="text-sm text-muted-foreground">Hours logged per day</p>
+              <h2 className="text-base font-semibold text-foreground">This Week</h2>
+              <p className="text-sm text-muted-foreground">Revenue per day (paid orders)</p>
             </div>
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyActivityData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="day" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    formatter={(value: any) => [`${value} hrs`, "Hours"]}
-                    contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e5e7eb" }}
-                  />
-                  <Bar dataKey="hours" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {hasActivity ? (
+              <div className="h-48 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weekActivity} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="day" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false}
+                      tickFormatter={(v) => v >= 1000 ? `${v / 1000}k` : `${v}`} />
+                    <Tooltip
+                      formatter={(v: any) => [`USD ${Number(v).toLocaleString()}`, "Revenue"]}
+                      contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #e5e7eb" }}
+                    />
+                    <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-muted/10">
+                <p className="text-sm text-muted-foreground">No orders this week yet.</p>
+              </div>
+            )}
           </Card>
 
           {/* Recent activity */}
@@ -268,62 +267,79 @@ export default function FreelancerDashboardClient({ projectStatusData }: { proje
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Recent Activity</h2>
-                <p className="text-sm text-muted-foreground">Your latest project updates</p>
+                <p className="text-sm text-muted-foreground">Latest orders and projects</p>
               </div>
-              <Button variant="ghost" size="sm" className="text-sm">
-                View all <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+              <Button variant="ghost" size="sm" className="text-sm" asChild>
+                <Link href="/freelancer/orders">View all <ArrowUpRight className="ml-1 h-3.5 w-3.5" /></Link>
               </Button>
             </div>
-            <div className="space-y-1">
-              {recentActivity.map((item) => {
-                const status = statusStyles[item.status];
-                const StatusIcon = status.icon;
-                return (
-                  <div key={item.id} className="flex items-center justify-between gap-4 rounded-lg px-2 py-3 transition-colors hover:bg-muted/50">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted sm:flex">
-                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+            {recentActivity.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+                <Inbox className="h-8 w-8 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">No activity yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {recentActivity.map((item) => {
+                  const s = statusStyles[item.status] ?? statusStyles.pending;
+                  const StatusIcon = s.icon;
+                  return (
+                    <div key={item.id} className="flex items-center justify-between gap-4 rounded-lg px-2 py-3 transition-colors hover:bg-muted/50">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted sm:flex">
+                          <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                          <p className="text-xs text-muted-foreground">{item.client} · {item.date}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">{item.client} · {item.date}</p>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className="text-sm font-semibold text-foreground">{item.amount}</span>
+                        <span className={`hidden items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium sm:inline-flex ${s.className}`}>
+                          <StatusIcon className="h-3 w-3" />
+                          {s.label}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-sm font-semibold text-foreground">{item.amount}</span>
-                      <span className={`hidden items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium sm:inline-flex ${status.className}`}>
-                        <StatusIcon className="h-3 w-3" />
-                        {status.label}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </Card>
 
         </div>
 
-        {/* Upcoming deadlines */}
+        {/* Upcoming work */}
         <Card className="p-5">
           <div className="mb-4">
-            <h2 className="text-base font-semibold text-foreground">Upcoming Deadlines</h2>
-            <p className="text-sm text-muted-foreground">Stay on top of your commitments</p>
+            <h2 className="text-base font-semibold text-foreground">Active Projects</h2>
+            <p className="text-sm text-muted-foreground">Hired jobs currently in progress</p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {upcomingDeadlines.map((item) => (
-              <div key={item.id} className="flex items-start gap-3 rounded-lg border border-border/60 p-3">
-                <div className="mt-0.5 rounded-md bg-primary/10 p-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-primary" />
+          {upcomingDeadlines.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+              <Calendar className="h-8 w-8 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">No active projects right now.</p>
+              <Button variant="outline" size="sm" asChild className="mt-1">
+                <Link href="/jobs">Browse open jobs</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {upcomingDeadlines.map((item) => (
+                <div key={item.id} className="flex items-start gap-3 rounded-lg border border-border/60 p-3">
+                  <div className="mt-0.5 rounded-md bg-primary/10 p-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.client}</p>
+                    <p className="mt-1 text-xs font-medium text-primary">{item.due}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.client}</p>
-                  <p className="mt-1 text-xs font-medium text-primary">{item.due}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
 
       </div>
