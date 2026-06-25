@@ -9,6 +9,7 @@ import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FadeIn } from "@/components/FadeIn";
+import { HeroSearch } from "@/components/HeroSearch";
 import {
   ArrowRight, Star, CheckCircle2, Code, Palette, PenLine,
   TrendingUp, Video, Brain, BarChart3, Smartphone,
@@ -50,7 +51,6 @@ const testimonials = [
   { name: "Priya M.",   role: "E-commerce Owner",     body: "Cut our design costs by 60% without sacrificing quality. The review system helps you pick the right talent fast.", rating: 5, initials: "PM" },
 ];
 
-const popularSearches = ["Logo Design", "WordPress", "React Developer", "Video Editing", "Copywriting", "SEO"];
 
 /* ────────────────────────────────────────────────────────────────
    Page
@@ -131,28 +131,7 @@ export default async function HomePage() {
 
               {/* Search bar */}
               <FadeIn delay={200}>
-                <div className="mt-8 max-w-lg">
-                  <div className="flex items-center gap-2 rounded-2xl border border-border bg-background/90 p-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur">
-                    <div className="flex flex-1 items-center gap-2 pl-3">
-                      <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <Link href="/service" className="flex-1 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                        Search for any skill or service…
-                      </Link>
-                    </div>
-                    <Button size="sm" className="rounded-xl px-5 shrink-0" asChild>
-                      <Link href={hireFreelancerHref}>Search</Link>
-                    </Button>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                    <span className="text-muted-foreground font-medium">Popular:</span>
-                    {popularSearches.map((s) => (
-                      <Link key={s} href={`/service?q=${encodeURIComponent(s)}`}
-                        className="rounded-full border border-border bg-background/80 px-2.5 py-1 text-foreground/70 hover:border-primary hover:text-primary transition-colors backdrop-blur">
-                        {s}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+                <HeroSearch hireHref={hireFreelancerHref} />
               </FadeIn>
 
               {/* Secondary CTA + trust */}

@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { freelancerServices, users } from "@/drizzle/schema";
 import { eq, desc } from "drizzle-orm";
-import { auth } from "@/auth"; 
+import { auth } from "@/auth";
+import { Suspense } from "react";
 import { ServicesClient } from "./ServicesClient";
 
 export const metadata = {
@@ -29,10 +30,11 @@ export default async function ServicesPage() {
     .orderBy(desc(freelancerServices.createdAt));
 
   return (
-    // Render without KycGuard or redirects so anyone can view
-    <ServicesClient 
-      initialServices={liveServices} 
-      currentUserId={session?.user?.id} 
-    />
+    <Suspense fallback={null}>
+      <ServicesClient
+        initialServices={liveServices}
+        currentUserId={session?.user?.id}
+      />
+    </Suspense>
   );
 }

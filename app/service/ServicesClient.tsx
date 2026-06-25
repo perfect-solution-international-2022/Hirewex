@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,14 @@ import { Search, ChevronDown, Star, ImageIcon } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 
 export function ServicesClient({ initialServices, currentUserId }: { initialServices: any[], currentUserId?: string }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
+
+  // Sync if the URL ?q= param changes (e.g. browser back/forward)
+  useEffect(() => {
+    const q = searchParams.get("q") ?? "";
+    setSearchQuery(q);
+  }, [searchParams]);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
