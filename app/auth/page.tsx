@@ -127,17 +127,57 @@ function AuthContent() {
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden flex-col justify-between p-12 lg:flex" style={{ background: "var(--gradient-hero)" }}>
+    <div className="min-h-screen lg:grid lg:grid-cols-2">
+      {/* Left panel — full height, only shown on desktop */}
+      <div
+        className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden"
+        style={{ background: "var(--gradient-hero)" }}
+      >
+        {/* Decorative blobs */}
+        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-primary/5 blur-2xl pointer-events-none" />
+
         <Logo />
-        <div>
-          <h2 className="text-4xl font-bold leading-tight">Build the career or business you want.</h2>
-          <p className="mt-4 max-w-md text-muted-foreground">Hirewex is built for serious freelancers and discerning buyers. Real work, real pay, real reviews.</p>
+
+        <div className="relative z-10 space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-5xl font-bold leading-tight tracking-tight">
+              Build the career<br />or business<br />you want.
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-sm">
+              Hirewex is built for serious freelancers and discerning buyers. Real work, real pay, real reviews.
+            </p>
+          </div>
+
+          {/* Social proof stats */}
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { value: "10K+", label: "Freelancers" },
+              { value: "5K+", label: "Projects done" },
+              { value: "98%", label: "Satisfaction" },
+            ].map(({ value, label }) => (
+              <div key={label} className="rounded-xl bg-white/5 border border-white/10 px-4 py-3">
+                <p className="text-2xl font-bold text-primary">{value}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Trust badges */}
+          <div className="flex flex-wrap gap-2">
+            {["Secure escrow", "Verified freelancers", "Real reviews", "24/7 support"].map((b) => (
+              <span key={b} className="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-3 py-1 text-xs font-medium">
+                <CheckCircle2 className="h-3 w-3 text-primary" /> {b}
+              </span>
+            ))}
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Hirewex</p>
+
+        <p className="text-sm text-muted-foreground relative z-10">© {new Date().getFullYear()} Hirewex</p>
       </div>
 
-      <div className="flex items-center justify-center p-6">
+      {/* Right panel — card centred in remaining space */}
+      <div className="flex min-h-screen lg:min-h-0 items-center justify-center p-6 bg-background">
         <Card className="w-full max-w-md p-8">
           <div className="lg:hidden mb-6 flex justify-center"><Logo /></div>
           
@@ -198,7 +238,7 @@ function AuthContent() {
             </TabsContent>
           </Tabs>
         </Card>
-      </div>
+      </div>  {/* end right panel */}
     </div>
   );
 }
