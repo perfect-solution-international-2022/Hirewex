@@ -16,6 +16,7 @@ import {
   Search, Briefcase, Globe, Award,
 } from "lucide-react";
 
+
 /* ────────────────────────────────────────────────────────────────
    Static data
 ───────────────────────────────────────────────────────────────── */
@@ -85,111 +86,157 @@ export default async function HomePage() {
       <SiteHeader />
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-green-950/20 dark:via-background dark:to-emerald-950/10" />
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px]" />
-        <div className="pointer-events-none absolute top-1/2 -left-20 h-[300px] w-[300px] rounded-full bg-emerald-400/10 blur-[80px]" />
-        {/* Grid overlay */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.025]"
-          style={{ backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      <section className="relative overflow-hidden border-b border-border">
+        <style>{`
+          @keyframes marquee {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+          }
+          .animate-marquee { animation: marquee 36s linear infinite; }
+          @media (prefers-reduced-motion: reduce) { .animate-marquee { animation: none; } }
+        `}</style>
 
-        <div className="container relative mx-auto px-4 pt-24 pb-20 md:pt-32 md:pb-28">
-          <div className="mx-auto max-w-4xl text-center">
+        {/* Base gradient */}
+        <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
+        {/* Soft glow */}
+        <div className="pointer-events-none absolute right-0 top-1/4 h-[420px] w-[420px] rounded-full bg-primary/10 blur-[110px]" />
 
-            <FadeIn>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mb-6">
-                <Zap className="h-3 w-3" /> The freelance platform built for results
-              </div>
-            </FadeIn>
+        <div className="container relative mx-auto px-4 py-20 md:py-28">
+          <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
 
-            <FadeIn delay={80}>
-              <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
-                Find the right{" "}
-                <span className="relative">
-                  <span className="text-primary">freelancer</span>
-                  <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 8" preserveAspectRatio="none" fill="none">
-                    <path d="M0 6 Q50 1 100 5 Q150 9 200 4" stroke="currentColor" strokeWidth="2.5" className="text-primary/40" strokeLinecap="round" />
-                  </svg>
-                </span>
-                {" "}for any job.
-              </h1>
-            </FadeIn>
+            {/* ── Left: copy + search ── */}
+            <div>
+              <FadeIn>
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
+                  <Zap className="h-3.5 w-3.5 text-primary" />
+                  Trusted by 50k+ freelancers worldwide
+                </div>
+              </FadeIn>
 
-            <FadeIn delay={160}>
-              <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Hirewex connects you with verified talent across web, design, marketing, and 100+ other skills — with secure escrow so you only pay for work you love.
-              </p>
-            </FadeIn>
+              <FadeIn delay={80}>
+                <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl">
+                  Where great work{" "}
+                  <span className="relative inline-block">
+                    <span className="relative z-10 text-primary">gets done.</span>
+                    <span className="absolute inset-x-0 bottom-1 z-0 h-3 rounded-sm bg-primary/15" aria-hidden="true" />
+                  </span>
+                </h1>
+              </FadeIn>
 
-            {/* Search bar */}
-            <FadeIn delay={240}>
-              <div className="mt-10 mx-auto max-w-2xl">
-                <div className="flex items-center gap-2 rounded-2xl border border-border bg-background/90 p-2 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur">
-                  <div className="flex flex-1 items-center gap-3 pl-3">
-                    <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
-                    <Link href="/service" className="flex-1 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      Search for any skill or service…
-                    </Link>
+              <FadeIn delay={140}>
+                <p className="mt-5 max-w-xl text-lg text-muted-foreground">
+                  Hirewex connects buyers with vetted freelancers across web, design, marketing and more. Secure escrow, real reviews, and zero hassle.
+                </p>
+              </FadeIn>
+
+              {/* Search bar */}
+              <FadeIn delay={200}>
+                <div className="mt-8 max-w-lg">
+                  <div className="flex items-center gap-2 rounded-2xl border border-border bg-background/90 p-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.08)] backdrop-blur">
+                    <div className="flex flex-1 items-center gap-2 pl-3">
+                      <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Link href="/service" className="flex-1 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        Search for any skill or service…
+                      </Link>
+                    </div>
+                    <Button size="sm" className="rounded-xl px-5 shrink-0" asChild>
+                      <Link href={hireFreelancerHref}>Search</Link>
+                    </Button>
                   </div>
-                  <Button size="default" className="rounded-xl px-6 shrink-0" asChild>
-                    <Link href={hireFreelancerHref}>Search</Link>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-muted-foreground font-medium">Popular:</span>
+                    {popularSearches.map((s) => (
+                      <Link key={s} href={`/service?q=${encodeURIComponent(s)}`}
+                        className="rounded-full border border-border bg-background/80 px-2.5 py-1 text-foreground/70 hover:border-primary hover:text-primary transition-colors backdrop-blur">
+                        {s}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </FadeIn>
+
+              {/* Secondary CTA + trust */}
+              <FadeIn delay={260}>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Button size="default" variant="outline" asChild className="bg-background/80 backdrop-blur">
+                    <Link href={postProjectHref}>Post a Project</Link>
                   </Button>
                 </div>
-
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
-                  <span className="text-muted-foreground font-medium">Popular:</span>
-                  {popularSearches.map((s) => (
-                    <Link key={s} href={`/service?q=${encodeURIComponent(s)}`}
-                      className="rounded-full border border-border bg-background px-3 py-1 text-foreground/70 hover:border-primary hover:text-primary transition-colors">
-                      {s}
-                    </Link>
-                  ))}
+                <div className="mt-6 flex flex-wrap gap-6 text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Verified profiles</span>
+                  <span className="inline-flex items-center gap-2"><Star className="h-4 w-4 text-primary" /> 4.9 avg rating</span>
                 </div>
-              </div>
-            </FadeIn>
+              </FadeIn>
+            </div>
 
-            {/* Trust badges */}
-            <FadeIn delay={320}>
-              <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-                {[
-                  { icon: ShieldCheck, text: "Verified freelancers" },
-                  { icon: Wallet,      text: "Secure escrow" },
-                  { icon: Star,        text: "4.9 avg rating" },
-                ].map(({ icon: Icon, text }) => (
-                  <span key={text} className="inline-flex items-center gap-1.5">
-                    <Icon className="h-4 w-4 text-primary" /> {text}
-                  </span>
-                ))}
+            {/* ── Right: proof-of-work cards ── */}
+            <FadeIn delay={120} direction="right">
+              <div className="relative mx-auto w-full max-w-lg py-4">
+                {/* Floating "bidding now" badge */}
+                <div className="absolute -left-4 -top-6 z-30 hidden items-center gap-2 rounded-full border border-border bg-background py-2 pl-1.5 pr-4 shadow-[var(--shadow-elegant)] sm:flex">
+                  <div className="flex -space-x-2">
+                    <div className="grid h-7 w-7 place-items-center rounded-full border-2 border-background bg-primary/15 text-xs font-semibold text-primary">JD</div>
+                    <div className="grid h-7 w-7 place-items-center rounded-full border-2 border-background bg-primary/25 text-xs font-semibold text-primary">MK</div>
+                    <div className="grid h-7 w-7 place-items-center rounded-full border-2 border-background bg-primary text-xs font-semibold text-primary-foreground">+9</div>
+                  </div>
+                  <span className="text-sm font-medium">bidding now</span>
+                </div>
+
+                {/* Back receipt */}
+                <div className="absolute inset-x-8 -top-4 hidden rotate-6 rounded-xl border border-border bg-card p-6 opacity-60 shadow-[var(--shadow-card)] sm:block">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-accent text-primary">
+                      <Code className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold leading-tight">API integration</p>
+                      <p className="font-mono text-base text-muted-foreground">$680.00</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Front receipt */}
+                <div className="relative -rotate-1 rounded-xl border border-border bg-card p-8 shadow-[var(--shadow-elegant)] sm:-rotate-2">
+                  <div className="absolute right-5 top-5 rotate-6 rounded border-2 border-primary px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary">
+                    Paid
+                  </div>
+                  <div className="flex items-center gap-4 pr-16">
+                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-accent text-primary">
+                      <Palette className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold leading-tight">Brand identity redesign</p>
+                      <p className="text-sm text-muted-foreground">for TechFlow Inc.</p>
+                    </div>
+                  </div>
+                  <div className="mt-7 flex items-end justify-between border-t border-dashed border-border pt-5">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Released from escrow</p>
+                      <p className="font-mono text-3xl font-bold tracking-tight">$1,250.00</p>
+                    </div>
+                    <div className="flex gap-1 text-primary">
+                      {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-5 w-5 fill-current" />)}
+                    </div>
+                  </div>
+                  <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+                    &quot;Delivered ahead of schedule and exactly on brief. Already hired them again.&quot;
+                  </p>
+                </div>
               </div>
             </FadeIn>
           </div>
 
-          {/* Floating social proof cards */}
-          <div className="relative mt-16 hidden md:block">
-            <div className="mx-auto grid max-w-5xl grid-cols-3 gap-4">
-              {[
-                { emoji: "🎨", title: "Brand identity design",  amount: "$850",   tag: "Completed · 2h ago" },
-                { emoji: "⚙️", title: "REST API integration",   amount: "$1,200", tag: "In progress" },
-                { emoji: "📈", title: "SEO & content strategy", amount: "$600",   tag: "Just posted" },
-              ].map((card, i) => (
-                <FadeIn key={card.title} delay={i * 120} direction="up">
-                  <div className="rounded-2xl border border-border/60 bg-background/80 p-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)] backdrop-blur hover:-translate-y-1 transition-transform duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-lg">{card.emoji}</div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate">{card.title}</p>
-                        <p className="text-xs text-muted-foreground">{card.tag}</p>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-lg font-bold text-primary">{card.amount}</span>
-                      <span className="text-[10px] rounded-full bg-primary/10 text-primary font-semibold px-2 py-0.5">★ 5.0</span>
-                    </div>
-                  </div>
-                </FadeIn>
-              ))}
+          {/* Category marquee */}
+          <div className="mt-16 border-t border-border pt-6">
+            <div className="overflow-hidden"
+              style={{ maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)" }}>
+              <div className="flex w-max animate-marquee gap-10">
+                {[...categories, ...categories].map((c, i) => (
+                  <span key={i} className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-muted-foreground">
+                    <c.icon className="h-4 w-4 text-primary" /> {c.name}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
