@@ -83,9 +83,7 @@ export default function FreelancerSettingsPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const memberSince = user?.createdAt
-    ? new Date(user.createdAt as string).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
-    : null;
+  const memberSince: string | null = null; // createdAt not exposed in session type
 
   const notifItems: { key: keyof NotifPrefs; label: string; desc: string; icon: React.ReactNode }[] = [
     { key: "newBid", label: "New bid on your job", desc: "When someone bids on a job you posted", icon: <FileText className="h-4 w-4" /> },
