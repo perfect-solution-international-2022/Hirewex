@@ -119,6 +119,17 @@ export async function clearChatHistory(conversationId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
+  // Verify the caller is a participant in this conversation before deleting
+  const [convo] = await db
+    .select({ userA: conversations.userA, userB: conversations.userB })
+    .from(conversations)
+    .where(eq(conversations.id, conversationId))
+    .limit(1);
+
+  if (!convo || (convo.userA !== session.user.id && convo.userB !== session.user.id)) {
+    throw new Error("Forbidden");
+  }
+
   try {
     await db.delete(messages)
       .where(eq(messages.conversationId, conversationId));

@@ -3,13 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { users, freelancerWorkExperiences, freelancerSkills } from "@/drizzle/schema"; 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { auth } from "@/auth"; 
 import { put, del } from "@vercel/blob"; 
 
-// Fetch User Data
+// Fetch User Data — only accessible by the authenticated user themselves
 export async function getProfileData(userId: string) {
   try {
+    const session = await auth();
+    if (!session?.user?.id || session.user.id !== userId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
     const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     const user = userResult[0];
 
@@ -33,20 +38,29 @@ export async function getProfileData(userId: string) {
   }
 }
 
-// 1. Update basic text fields (SECURED)
-export async function updateProfileBasic(data: any) {
+// 1. Update basic text fields — explicit allowlist prevents mass assignment
+export async function updateProfileBasic(data: {
+  name?: string;
+  displayName?: string;
+  aboutText?: string;
+  title?: string;
+  language?: string;
+  location?: string;
+  avatarUrl?: string;
+  portfolioUrl?: string;
+}) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return { success: false, error: "Unauthorized" };
     }
-    
-    const secureUserId = session.user.id;
+
+    const { name, displayName, aboutText, title, language, location, avatarUrl, portfolioUrl } = data;
 
     await db.update(users)
-      .set(data)
-      .where(eq(users.id, secureUserId));
-      
+      .set({ name, displayName, aboutText, title, language, location, avatarUrl, portfolioUrl })
+      .where(eq(users.id, session.user.id));
+
     revalidatePath("/freelancer/profile");
     revalidatePath("/settings/profile");
     return { success: true };
@@ -75,36 +89,46 @@ export async function saveBankDetails(data: {
   }
 }
 
-// 2. Work Experience Actions
-export async function saveWorkExperience(userId: string, workData: any) {
+// 2. Work Experience Actions — userId always derived from session, never from caller
+export async function saveWorkExperience(workData: any) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+    const sessionUserId = session.user.id;
+
     if (!workData.id.startsWith("temp_")) {
+      // Ownership check: only update rows that belong to the session user
       await db.update(freelancerWorkExperiences)
         .set({
           title: workData.title,
           type: workData.type,
           company: workData.company,
-          current: workData.current ? 1 : 0, 
+          current: workData.current ? 1 : 0,
           startDate: workData.start,
           endDate: workData.end,
           desc: workData.desc,
           skills: workData.skills,
-          industry: workData.industry
+          industry: workData.industry,
         })
-        .where(eq(freelancerWorkExperiences.id, workData.id));
+        .where(
+          and(
+            eq(freelancerWorkExperiences.id, workData.id),
+            eq(freelancerWorkExperiences.userId, sessionUserId),
+          )
+        );
     } else {
       await db.insert(freelancerWorkExperiences).values({
-        id: crypto.randomUUID(), 
-        userId: userId, 
+        id: crypto.randomUUID(),
+        userId: sessionUserId,
         title: workData.title,
         type: workData.type,
         company: workData.company,
-        current: workData.current ? 1 : 0, 
+        current: workData.current ? 1 : 0,
         startDate: workData.start,
         endDate: workData.end,
         desc: workData.desc,
         skills: workData.skills,
-        industry: workData.industry
+        industry: workData.industry,
       });
     }
     revalidatePath("/freelancer/profile");
@@ -117,8 +141,17 @@ export async function saveWorkExperience(userId: string, workData: any) {
 
 export async function deleteWorkExperience(workId: string) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
     if (!workId.startsWith("temp_")) {
-      await db.delete(freelancerWorkExperiences).where(eq(freelancerWorkExperiences.id, workId));
+      // Ownership check: AND userId = session.user.id ensures we can't delete another user's row
+      await db.delete(freelancerWorkExperiences).where(
+        and(
+          eq(freelancerWorkExperiences.id, workId),
+          eq(freelancerWorkExperiences.userId, session.user.id),
+        )
+      );
     }
     revalidatePath("/freelancer/profile");
     return { success: true };
@@ -128,19 +161,29 @@ export async function deleteWorkExperience(workId: string) {
   }
 }
 
-// 3. Skills Actions
-export async function saveSkill(userId: string, skillData: any) {
+// 3. Skills Actions — userId always derived from session, never from caller
+export async function saveSkill(skillData: any) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+    const sessionUserId = session.user.id;
+
     if (!skillData.id.startsWith("temp_")) {
+      // Ownership check: only update rows that belong to the session user
       await db.update(freelancerSkills)
         .set({ name: skillData.name, level: skillData.level })
-        .where(eq(freelancerSkills.id, skillData.id));
+        .where(
+          and(
+            eq(freelancerSkills.id, skillData.id),
+            eq(freelancerSkills.userId, sessionUserId),
+          )
+        );
     } else {
-      await db.insert(freelancerSkills).values({ 
+      await db.insert(freelancerSkills).values({
         id: crypto.randomUUID(),
-        userId: userId, 
-        name: skillData.name, 
-        level: skillData.level 
+        userId: sessionUserId,
+        name: skillData.name,
+        level: skillData.level,
       });
     }
     revalidatePath("/freelancer/profile");
@@ -153,8 +196,17 @@ export async function saveSkill(userId: string, skillData: any) {
 
 export async function deleteSkill(skillId: string) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
     if (!skillId.startsWith("temp_")) {
-      await db.delete(freelancerSkills).where(eq(freelancerSkills.id, skillId));
+      // Ownership check: AND userId = session.user.id ensures we can't delete another user's row
+      await db.delete(freelancerSkills).where(
+        and(
+          eq(freelancerSkills.id, skillId),
+          eq(freelancerSkills.userId, session.user.id),
+        )
+      );
     }
     revalidatePath("/freelancer/profile");
     return { success: true };
