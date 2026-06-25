@@ -118,7 +118,5 @@ export const adminNav = [
   ]},
   { label: "System", items: [
     { title: "General Settings", url: "/admin/settings", icon: Settings },
-    { title: "Logo & Favicon", url: "/admin/branding", icon: ImageIcon },
-    { title: "Policies", url: "/admin/policies", icon: FileText },
   ]},
 ];
