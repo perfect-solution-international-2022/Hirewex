@@ -5,7 +5,19 @@ import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader"; // Assu
 import { JobsClient } from "./JobsClient";
 
 export const metadata = {
-  title: "Find Jobs — Hirewex",
+  title: "Find Freelance Jobs & Remote Work — Browse Open Projects",
+  description:
+    "Find freelance jobs and remote projects across web development, design, marketing, writing and more. Place your bid and start earning on Hirewex.",
+  keywords: [
+    "freelance jobs", "remote work", "find freelance projects",
+    "web developer jobs", "designer jobs", "remote freelancing",
+    "bid on projects", "online jobs",
+  ],
+  openGraph: {
+    title: "Find Freelance Jobs — Hirewex",
+    description: "Browse open freelance projects and remote jobs. Place your bid and start earning.",
+    type: "website",
+  },
 };
 
 export const dynamic = "force-dynamic";

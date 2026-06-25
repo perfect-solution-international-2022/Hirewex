@@ -8,15 +8,48 @@ import { ProfilePreviewClient } from "./ProfilePreviewClient";
 
 export const dynamic = "force-dynamic";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hirewex.com";
+
 export async function generateMetadata({ params }: { params: { freelancerId: string } }) {
-  const resolvedParams = await params;
+  const { freelancerId } = await params;
   const [user] = await db
-    .select({ name: users.name, displayName: users.displayName })
+    .select({
+      name: users.name,
+      displayName: users.displayName,
+      title: users.title,
+      avatarUrl: users.avatarUrl,
+      aboutText: users.aboutText,
+    })
     .from(users)
-    .where(eq(users.id, resolvedParams.freelancerId));
+    .where(eq(users.id, freelancerId));
+
+  if (!user) return { title: "Freelancer Profile — Hirewex" };
+
+  const displayName = user.displayName || user.name || "Freelancer";
+  const headline = user.title || "Freelancer";
+  const desc = user.aboutText
+    ? user.aboutText.slice(0, 155) + (user.aboutText.length > 155 ? "…" : "")
+    : `Hire ${displayName} — ${headline} on Hirewex. View portfolio, reviews and services.`;
+  const avatar = user.avatarUrl ?? `${SITE_URL}/og-default.png`;
 
   return {
-    title: user ? `${user.displayName || user.name} — Profile` : "Profile",
+    title: `${displayName} — ${headline}`,
+    description: desc,
+    keywords: [displayName, headline, "hire freelancer", "freelancer profile", "Hirewex"],
+    openGraph: {
+      title: `${displayName} — Freelancer on Hirewex`,
+      description: desc,
+      url: `${SITE_URL}/profile-preview/${freelancerId}`,
+      type: "profile",
+      images: [{ url: avatar, width: 400, height: 400, alt: displayName }],
+    },
+    twitter: {
+      card: "summary",
+      title: `${displayName} — Freelancer on Hirewex`,
+      description: desc,
+      images: [avatar],
+    },
+    alternates: { canonical: `${SITE_URL}/profile-preview/${freelancerId}` },
   };
 }
 

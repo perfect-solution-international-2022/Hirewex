@@ -13,6 +13,57 @@ import { WriteReviewForm } from "./WriteReviewForm";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { createOrGetConversation } from "@/app/actions/chat";
+import type { Metadata } from "next";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hirewex.com";
+
+export async function generateMetadata(
+  { params }: { params: { id: string } }
+): Promise<Metadata> {
+  const { id } = await params;
+  const [row] = await db
+    .select({
+      title:       freelancerServices.title,
+      description: freelancerServices.description,
+      category:    freelancerServices.category,
+      images:      freelancerServices.images,
+      sellerName:  users.displayName,
+      sellerFallback: users.name,
+    })
+    .from(freelancerServices)
+    .innerJoin(users, eq(freelancerServices.freelancerId, users.id))
+    .where(eq(freelancerServices.id, id))
+    .limit(1);
+
+  if (!row) return {};
+
+  const seller = row.sellerName || row.sellerFallback || "Freelancer";
+  const imgs = row.images as string[] | null;
+  const ogImage = imgs?.[0] ?? `${SITE_URL}/og-default.png`;
+  const desc = row.description
+    ? row.description.slice(0, 155) + (row.description.length > 155 ? "…" : "")
+    : `Hire ${seller} for ${row.title} on Hirewex.`;
+
+  return {
+    title: `${row.title} — ${seller}`,
+    description: desc,
+    keywords: [row.title, row.category ?? "", seller, "freelancer", "hire", "Hirewex"].filter(Boolean),
+    openGraph: {
+      title: `${row.title} by ${seller}`,
+      description: desc,
+      url: `${SITE_URL}/service/${id}`,
+      type: "website",
+      images: [{ url: ogImage, width: 1200, height: 630, alt: row.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${row.title} by ${seller}`,
+      description: desc,
+      images: [ogImage],
+    },
+    alternates: { canonical: `${SITE_URL}/service/${id}` },
+  };
+}
 
 const formatPrice = (price: string | number) => {
   if (!price) return "0";
@@ -115,8 +166,46 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
     return false;
   };
 
+  // JSON-LD structured data
+  const packages = service.packages as any;
+  const lowestPrice = packages?.basic?.price || packages?.standard?.price || packages?.premium?.price;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": service.title,
+    "description": service.description,
+    "provider": {
+      "@type": "Person",
+      "name": displayName,
+      "image": avatar || undefined,
+    },
+    "category": service.category,
+    ...(lowestPrice ? {
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "price": Number(lowestPrice).toFixed(2),
+        "availability": "https://schema.org/InStock",
+      },
+    } : {}),
+    ...(rating ? {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": rating,
+        "reviewCount": reviewCount,
+        "bestRating": "5",
+        "worstRating": "1",
+      },
+    } : {}),
+    "url": `${SITE_URL}/service/${serviceId}`,
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <SiteHeader />
 
       <div className="border-b border-border/40 bg-muted/20">

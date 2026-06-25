@@ -10,6 +10,27 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FadeIn } from "@/components/FadeIn";
 import { HeroSearch } from "@/components/HeroSearch";
+import type { Metadata } from "next";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://hirewex.com";
+
+export const metadata: Metadata = {
+  title: "Hirewex — Hire Top Freelancers Online | Freelance Marketplace",
+  description:
+    "Hirewex is a trusted freelance marketplace. Hire verified web developers, designers, marketers, writers and more. Secure escrow payments and real verified reviews.",
+  keywords: [
+    "hire freelancers online", "freelance marketplace", "best freelance platform",
+    "hire web developer", "hire graphic designer", "hire copywriter",
+    "hire SEO expert", "outsource work", "remote freelancers",
+    "post a job online", "find freelance work", "freelance jobs",
+  ],
+  alternates: { canonical: SITE_URL },
+  openGraph: {
+    url: SITE_URL,
+    title: "Hirewex — Hire Top Freelancers Online",
+    description: "Find and hire verified freelancers for any skill. Secure escrow, real reviews, zero hassle.",
+  },
+};
 import {
   ArrowRight, Star, CheckCircle2, Code, Palette, PenLine,
   TrendingUp, Video, Brain, BarChart3, Smartphone,
@@ -81,8 +102,32 @@ export default async function HomePage() {
     .orderBy(desc(freelancerServices.createdAt))
     .limit(6);
 
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Hirewex",
+    "url": SITE_URL,
+    "logo": `${SITE_URL}/logo.png`,
+    "description": "Hirewex is a trusted freelance marketplace connecting businesses with vetted freelancers worldwide.",
+    "sameAs": [],
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Hirewex",
+    "url": SITE_URL,
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": { "@type": "EntryPoint", "urlTemplate": `${SITE_URL}/service?q={search_term_string}` },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
       <SiteHeader />
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
