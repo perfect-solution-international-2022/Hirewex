@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
-import { freelancerServices, users, profiles, reviews } from "@/drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { freelancerServices, users, profiles, reviews, serviceOrders } from "@/drizzle/schema";
+import { eq, desc, and } from "drizzle-orm";
+import { aliasedTable } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,9 +9,10 @@ import { Star, Check, MapPin, Globe, Clock, User, BadgeCheck, Edit } from "lucid
 import { Button } from "@/components/ui/button";
 import { ServiceGallery } from "./ServiceGallery";
 import { PricingSidebar } from "./PricingSidebar";
+import { WriteReviewForm } from "./WriteReviewForm";
 import Link from "next/link";
-import { auth } from "@/auth"; 
-import { createOrGetConversation } from "@/app/actions/chat"; 
+import { auth } from "@/auth";
+import { createOrGetConversation } from "@/app/actions/chat";
 
 const formatPrice = (price: string | number) => {
   if (!price) return "0";
@@ -39,12 +41,50 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
 
   const isOwner = currentUserId === service.freelancerId;
 
+  const reviewerAlias = aliasedTable(users, "reviewer");
+
+  // Fetch reviews with real reviewer info
   const freelancerReviews = await db
-    .select()
+    .select({
+      id:             reviews.id,
+      rating:         reviews.rating,
+      comment:        reviews.comment,
+      createdAt:      reviews.createdAt,
+      reviewerName:   reviewerAlias.displayName,
+      reviewerFallback: reviewerAlias.name,
+      reviewerAvatar: reviewerAlias.avatarUrl,
+    })
     .from(reviews)
+    .innerJoin(reviewerAlias, eq(reviews.reviewerId, reviewerAlias.id))
     .where(eq(reviews.revieweeId, user.id))
     .orderBy(desc(reviews.createdAt))
-    .limit(5);
+    .limit(10);
+
+  // Check if the current buyer has a paid order for this service and whether they've reviewed
+  let buyerOrderId: string | null = null;
+  let buyerExistingReview: { rating: number; comment: string | null } | null = null;
+
+  if (currentUserId && !isOwner) {
+    const [buyerOrder] = await db
+      .select({ id: serviceOrders.id })
+      .from(serviceOrders)
+      .where(and(
+        eq(serviceOrders.buyerId, currentUserId),
+        eq(serviceOrders.serviceId, serviceId),
+        eq(serviceOrders.status, "paid"),
+      ))
+      .limit(1);
+
+    if (buyerOrder) {
+      buyerOrderId = buyerOrder.id;
+      const [existingReview] = await db
+        .select({ rating: reviews.rating, comment: reviews.comment })
+        .from(reviews)
+        .where(and(eq(reviews.serviceOrderId, buyerOrder.id), eq(reviews.reviewerId, currentUserId)))
+        .limit(1);
+      if (existingReview) buyerExistingReview = existingReview;
+    }
+  }
 
   const displayName = user.displayName || user.name || "Freelancer";
   const headline = profile?.headline || user.title || service.category;
@@ -238,36 +278,57 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
               </div>
             </section>
 
-            <section className="mb-12">
-              <h2 className="text-xl font-bold mb-5 pb-3 border-b border-border/50 flex items-center gap-2">
+            <section className="mb-12 space-y-6">
+              <h2 className="text-xl font-bold pb-3 border-b border-border/50 flex items-center gap-2">
                 Reviews
                 <span className="text-base font-normal text-muted-foreground">({reviewCount})</span>
               </h2>
 
+              {/* Write a review — only for buyers who have a paid order */}
+              {buyerOrderId && (
+                <WriteReviewForm
+                  serviceOrderId={buyerOrderId}
+                  revieweeId={user.id}
+                  freelancerName={displayName}
+                  freelancerAvatar={avatar}
+                  serviceTitle={service.title}
+                  alreadyReviewed={!!buyerExistingReview}
+                  myReview={buyerExistingReview}
+                />
+              )}
+
               {freelancerReviews.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 py-10 text-center">
-                  <p className="text-sm text-muted-foreground">No reviews yet — be the first!</p>
+                  <p className="text-sm text-muted-foreground">{buyerOrderId ? "You'll be the first to leave a review!" : "No reviews yet — be the first!"}</p>
                 </div>
               ) : (
-                <div className="space-y-0 divide-y divide-border/50">
-                  {freelancerReviews.map((review) => (
-                    <div key={review.id} className="py-6 first:pt-0">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">R</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-semibold text-sm text-foreground">Reviewer</div>
-                          <div className="flex items-center gap-0.5 mt-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star key={i} className={`h-3 w-3 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />
-                            ))}
+                <div className="divide-y divide-border/50">
+                  {freelancerReviews.map((review) => {
+                    const rName = review.reviewerName || review.reviewerFallback || "Buyer";
+                    return (
+                      <div key={review.id} className="py-6 first:pt-0">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={review.reviewerAvatar ?? ""} />
+                            <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+                              {rName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-semibold text-sm text-foreground">{rName}</div>
+                            <div className="flex items-center gap-0.5 mt-0.5">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star key={i} className={`h-3 w-3 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />
+                              ))}
+                            </div>
                           </div>
                         </div>
+                        {review.comment && (
+                          <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+                        )}
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>

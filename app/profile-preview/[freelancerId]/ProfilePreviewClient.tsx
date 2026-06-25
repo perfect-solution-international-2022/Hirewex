@@ -225,23 +225,32 @@ export function ProfilePreviewClient({
                 </div>
               ) : (
                 <div className="space-y-0 divide-y divide-border/50">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="py-5 first:pt-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">R</AvatarFallback>
-                        </Avatar>
-                        <div className="flex items-center gap-0.5">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className={`h-3 w-3 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />
-                          ))}
+                  {reviews.map((review) => {
+                    const rName = review.reviewerName || review.reviewerFallback || "Buyer";
+                    return (
+                      <div key={review.id} className="py-5 first:pt-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={review.reviewerAvatar ?? ""} />
+                            <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+                              {rName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{rName}</p>
+                            <div className="flex items-center gap-0.5 mt-0.5">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star key={i} className={`h-3 w-3 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`} />
+                              ))}
+                            </div>
+                          </div>
                         </div>
+                        {review.comment && (
+                          <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+                        )}
                       </div>
-                      {review.comment && (
-                        <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>

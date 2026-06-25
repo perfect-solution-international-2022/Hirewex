@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { SubmittedWorkClient } from "./SubmittedWorkClient";
+import { getMyReviewedIds } from "@/app/actions/reviews";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,8 @@ export default async function SubmittedWorkPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth?mode=signin");
 
-  const submissions = await db
-    .select({
+  const [submissions, reviewed] = await Promise.all([
+    db.select({
       submission: projectSubmissions,
       project: projects,
       job: jobs,
@@ -32,12 +33,19 @@ export default async function SubmittedWorkPage() {
     .leftJoin(freelancerServices, eq(serviceOrders.serviceId, freelancerServices.id))
     .innerJoin(users, eq(projectSubmissions.freelancerId, users.id))
     .where(eq(projectSubmissions.buyerId, session.user.id))
-    .orderBy(desc(projectSubmissions.createdAt));
+    .orderBy(desc(projectSubmissions.createdAt)),
+
+    getMyReviewedIds(session.user.id),
+  ]);
 
   return (
     <DashboardShell title="Submitted Work" role="buyer">
       <div className="mx-auto w-full max-w-5xl">
-        <SubmittedWorkClient submissions={submissions} />
+        <SubmittedWorkClient
+          submissions={submissions}
+          reviewedProjectIds={reviewed.projectIds}
+          reviewedOrderIds={reviewed.orderIds}
+        />
       </div>
     </DashboardShell>
   );

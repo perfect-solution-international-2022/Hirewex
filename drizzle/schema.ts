@@ -268,7 +268,8 @@ export const projects = mysqlTable("projects", {
 
 export const reviews = mysqlTable("reviews", {
 	id: varchar({ length: 36 }).default(sql`(uuid())`).notNull(),
-	projectId: varchar("project_id", { length: 36 }).notNull().references(() => projects.id, { onDelete: "cascade" } ),
+	projectId: varchar("project_id", { length: 36 }).references(() => projects.id, { onDelete: "cascade" }),
+	serviceOrderId: varchar("service_order_id", { length: 36 }).references(() => serviceOrders.id, { onDelete: "cascade" }),
 	reviewerId: varchar("reviewer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" } ),
 	revieweeId: varchar("reviewee_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" } ),
 	rating: int().notNull(),
@@ -280,6 +281,7 @@ export const reviews = mysqlTable("reviews", {
 	index("reviewee_id").on(table.revieweeId),
 	primaryKey({ columns: [table.id], name: "reviews_id"}),
 	unique("project_id").on(table.projectId, table.reviewerId),
+	unique("review_order_reviewer").on(table.serviceOrderId, table.reviewerId),
 	check("reviews_chk_1", sql`(\`rating\` between 1 and 5)`),
 ]);
 

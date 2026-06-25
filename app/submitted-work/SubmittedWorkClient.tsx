@@ -12,38 +12,147 @@ import {
 } from "@/components/ui/dialog";
 import {
   CheckCircle2, XCircle, RotateCcw, Link2, FileText,
-  Download, Calendar, ClipboardList, Briefcase, Package, AlertTriangle,
+  Download, Calendar, ClipboardList, Briefcase, Package, AlertTriangle, Star, MessageSquare,
 } from "lucide-react";
 import { reviewSubmissionAction } from "@/app/actions/projects";
+import { submitReviewAction } from "@/app/actions/reviews";
 
 function formatDate(d: string) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(d));
 }
 
 const statusConfig = {
-  pending: { label: "Awaiting Review", className: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400" },
-  accepted: { label: "Accepted", className: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400" },
-  rejected: { label: "Rejected", className: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400" },
+  pending:            { label: "Awaiting Review",     className: "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400" },
+  accepted:           { label: "Accepted",            className: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  rejected:           { label: "Rejected",            className: "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400" },
   revision_requested: { label: "Revision Requested", className: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400" },
 } as const;
 
 const typeConfig = {
-  project: { label: "Job Submission", icon: Briefcase, className: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400" },
-  order: { label: "Service Order", icon: Package, className: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400" },
+  project: { label: "Job Submission",  icon: Briefcase, className: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400" },
+  order:   { label: "Service Order",   icon: Package,   className: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400" },
 } as const;
 
 type ReviewAction = "accepted" | "rejected" | "revision_requested";
 
-function ReviewDialog({
-  submissionId,
-  action,
-  open,
-  onClose,
+type ReviewTarget = {
+  projectId?:     string;
+  serviceOrderId?: string;
+  revieweeId:     string;
+  revieweeName:   string;
+  contextTitle:   string;
+};
+
+// ── Star selector ──────────────────────────────────────────────────────────────
+function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => onChange(i)}
+          onMouseEnter={() => setHovered(i)}
+          onMouseLeave={() => setHovered(0)}
+          className="focus:outline-none transition-transform hover:scale-110"
+        >
+          <Star className={`h-7 w-7 transition-colors ${i <= (hovered || value) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Leave-review dialog ─────────────────────────────────────────────────────────
+function LeaveReviewDialog({ target, open, onClose }: { target: ReviewTarget | null; open: boolean; onClose: () => void }) {
+  const [isPending, startTransition] = useTransition();
+  const [rating, setRating]   = useState(0);
+  const [comment, setComment] = useState("");
+
+  const handleClose = () => { if (isPending) return; setRating(0); setComment(""); onClose(); };
+
+  const handleSubmit = () => {
+    if (!target) return;
+    if (rating === 0) { toast.error("Please select a star rating."); return; }
+    startTransition(async () => {
+      const result = await submitReviewAction({
+        projectId:      target.projectId,
+        serviceOrderId: target.serviceOrderId,
+        revieweeId:     target.revieweeId,
+        rating,
+        comment,
+      });
+      if (result.success) {
+        toast.success("Review submitted! Thank you for your feedback.");
+        handleClose();
+      } else {
+        toast.error(result.error || "Failed to submit review.");
+        if (result.error?.includes("already reviewed")) handleClose();
+      }
+    });
+  };
+
+  if (!target) return null;
+
+  const ratingLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Leave a Review</DialogTitle>
+          <DialogDescription>
+            How was your experience with <span className="font-semibold text-foreground">{target.revieweeName}</span> on &ldquo;{target.contextTitle}&rdquo;?
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 py-1">
+          <div className="flex flex-col items-center gap-2 py-2">
+            <StarRating value={rating} onChange={setRating} />
+            {rating > 0 && (
+              <span className="text-sm font-semibold text-amber-600">{ratingLabels[rating]}</span>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="review-comment">Your review <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Textarea
+              id="review-comment"
+              placeholder="Share your experience — quality, communication, delivery..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="resize-none h-24 text-sm"
+              disabled={isPending}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose} disabled={isPending}>Skip</Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isPending || rating === 0}
+            className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+          >
+            <Star className="h-4 w-4" />
+            {isPending ? "Submitting…" : "Submit Review"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Submission action dialog (accept / reject / revision) ───────────────────────
+function SubmissionActionDialog({
+  item, action, open, onClose, onAccepted,
 }: {
-  submissionId: string;
-  action: ReviewAction | null;
-  open: boolean;
-  onClose: () => void;
+  item:       any;
+  action:     ReviewAction | null;
+  open:       boolean;
+  onClose:    () => void;
+  onAccepted: (target: ReviewTarget) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const [note, setNote] = useState("");
@@ -51,22 +160,34 @@ function ReviewDialog({
   const handleClose = () => { if (isPending) return; setNote(""); onClose(); };
 
   const handleConfirm = () => {
-    if (!action) return;
+    if (!action || !item) return;
     if ((action === "rejected" || action === "revision_requested") && !note.trim()) {
       toast.error("Note required", { description: "Please explain your decision to the freelancer." });
       return;
     }
     startTransition(async () => {
-      const result = await reviewSubmissionAction(submissionId, action, note);
+      const result = await reviewSubmissionAction(item.submission.id, action, note);
       if (result.success) {
         const messages: Record<ReviewAction, string> = {
-          accepted: "Work accepted! The freelancer has been notified.",
-          rejected: "Submission rejected. The freelancer has been notified.",
+          accepted:           "Work accepted! The freelancer has been notified.",
+          rejected:           "Submission rejected. The freelancer has been notified.",
           revision_requested: "Revision request sent to the freelancer.",
         };
         toast.success(messages[action]);
         setNote("");
         onClose();
+        if (action === "accepted") {
+          const type  = item.submission.type;
+          const title = type === "project" ? item.job?.title : item.service?.title;
+          const name  = item.freelancer?.displayName || item.freelancer?.name || "Freelancer";
+          onAccepted({
+            projectId:      item.submission.projectId || undefined,
+            serviceOrderId: item.submission.serviceOrderId || undefined,
+            revieweeId:     item.freelancer?.id,
+            revieweeName:   name,
+            contextTitle:   title ?? "the project",
+          });
+        }
       } else {
         toast.error("Action failed", { description: result.error });
       }
@@ -75,32 +196,32 @@ function ReviewDialog({
 
   const config: Record<ReviewAction, { title: string; description: string; warning: string | null; confirmLabel: string; confirmClass: string; needsNote: boolean }> = {
     accepted: {
-      title: "Accept this submission?",
-      description: "The freelancer will be marked as done and notified immediately.",
-      warning: "This cannot be undone. Once accepted, the submission is permanently closed.",
+      title:        "Accept this submission?",
+      description:  "The freelancer will be marked as done and notified immediately.",
+      warning:      "This cannot be undone. Once accepted, the submission is permanently closed.",
       confirmLabel: "Yes, Accept Work",
       confirmClass: "bg-emerald-600 hover:bg-emerald-700 text-white",
-      needsNote: false,
+      needsNote:    false,
     },
     rejected: {
-      title: "Reject this submission?",
-      description: "The freelancer will be notified. Please provide a reason so they understand what went wrong.",
-      warning: "This cannot be undone. The freelancer will see this rejection permanently.",
+      title:        "Reject this submission?",
+      description:  "The freelancer will be notified. Please provide a reason so they understand what went wrong.",
+      warning:      "This cannot be undone. The freelancer will see this rejection permanently.",
       confirmLabel: "Yes, Reject",
       confirmClass: "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
-      needsNote: true,
+      needsNote:    true,
     },
     revision_requested: {
-      title: "Request a revision?",
-      description: "The freelancer will be asked to revise their work and can resubmit.",
-      warning: null,
+      title:        "Request a revision?",
+      description:  "The freelancer will be asked to revise their work and can resubmit.",
+      warning:      null,
       confirmLabel: "Send Revision Request",
       confirmClass: "bg-orange-600 hover:bg-orange-700 text-white",
-      needsNote: true,
+      needsNote:    true,
     },
   };
 
-  if (!action) return null;
+  if (!action || !item) return null;
   const c = config[action];
 
   return (
@@ -118,19 +239,12 @@ function ReviewDialog({
               <span>{c.warning}</span>
             </div>
           )}
-
           {c.needsNote && (
             <div className="space-y-1.5">
-              <Label htmlFor="note">
-                Your note <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="note">Your note <span className="text-destructive">*</span></Label>
               <Textarea
                 id="note"
-                placeholder={
-                  action === "revision_requested"
-                    ? "Please update the color scheme and fix the typo on page 2..."
-                    : "The deliverable doesn't match the original brief because..."
-                }
+                placeholder={action === "revision_requested" ? "Please update the color scheme..." : "The deliverable doesn't match the brief because..."}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 className="resize-none h-24 text-sm"
@@ -151,11 +265,25 @@ function ReviewDialog({
   );
 }
 
-export function SubmittedWorkClient({ submissions }: { submissions: any[] }) {
-  const [dialogState, setDialogState] = useState<{ submissionId: string; action: ReviewAction } | null>(null);
+// ── Main client ─────────────────────────────────────────────────────────────────
+export function SubmittedWorkClient({
+  submissions,
+  reviewedProjectIds,
+  reviewedOrderIds,
+}: {
+  submissions:        any[];
+  reviewedProjectIds: string[];
+  reviewedOrderIds:   string[];
+}) {
+  const [dialogState,  setDialogState]  = useState<{ item: any; action: ReviewAction } | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<ReviewTarget | null>(null);
 
-  const pending = submissions.filter((s) => s.submission.status === "pending");
+  const pending  = submissions.filter((s) => s.submission.status === "pending");
   const reviewed = submissions.filter((s) => s.submission.status !== "pending");
+
+  const isReviewed = (sub: any) =>
+    (sub.submission.projectId      && reviewedProjectIds.includes(sub.submission.projectId)) ||
+    (sub.submission.serviceOrderId && reviewedOrderIds.includes(sub.submission.serviceOrderId));
 
   if (submissions.length === 0) {
     return (
@@ -202,41 +330,88 @@ export function SubmittedWorkClient({ submissions }: { submissions: any[] }) {
             Awaiting Review
             <span className="inline-flex items-center justify-center h-5 min-w-5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold px-1.5">{pending.length}</span>
           </h2>
-          <SubmissionList items={pending} onAction={(id, action) => setDialogState({ submissionId: id, action })} />
+          <SubmissionList
+            items={pending}
+            reviewedCheck={isReviewed}
+            onAction={(item, action) => setDialogState({ item, action })}
+            onReview={(item) => {
+              const type  = item.submission.type;
+              const title = type === "project" ? item.job?.title : item.service?.title;
+              const name  = item.freelancer?.displayName || item.freelancer?.name || "Freelancer";
+              setReviewTarget({
+                projectId:      item.submission.projectId || undefined,
+                serviceOrderId: item.submission.serviceOrderId || undefined,
+                revieweeId:     item.freelancer?.id,
+                revieweeName:   name,
+                contextTitle:   title ?? "the project",
+              });
+            }}
+          />
         </section>
       )}
 
       {reviewed.length > 0 && (
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-muted-foreground">Past Reviews</h2>
-          <SubmissionList items={reviewed} onAction={() => {}} />
+          <SubmissionList
+            items={reviewed}
+            reviewedCheck={isReviewed}
+            onAction={() => {}}
+            onReview={(item) => {
+              const type  = item.submission.type;
+              const title = type === "project" ? item.job?.title : item.service?.title;
+              const name  = item.freelancer?.displayName || item.freelancer?.name || "Freelancer";
+              setReviewTarget({
+                projectId:      item.submission.projectId || undefined,
+                serviceOrderId: item.submission.serviceOrderId || undefined,
+                revieweeId:     item.freelancer?.id,
+                revieweeName:   name,
+                contextTitle:   title ?? "the project",
+              });
+            }}
+          />
         </section>
       )}
 
-      <ReviewDialog
-        submissionId={dialogState?.submissionId ?? ""}
+      <SubmissionActionDialog
+        item={dialogState?.item ?? null}
         action={dialogState?.action ?? null}
         open={!!dialogState}
         onClose={() => setDialogState(null)}
+        onAccepted={(target) => setReviewTarget(target)}
+      />
+
+      <LeaveReviewDialog
+        target={reviewTarget}
+        open={!!reviewTarget}
+        onClose={() => setReviewTarget(null)}
       />
     </div>
   );
 }
 
-function SubmissionList({ items, onAction }: { items: any[]; onAction: (id: string, action: ReviewAction) => void }) {
+function SubmissionList({
+  items, reviewedCheck, onAction, onReview,
+}: {
+  items:         any[];
+  reviewedCheck: (item: any) => boolean;
+  onAction:      (item: any, action: ReviewAction) => void;
+  onReview:      (item: any) => void;
+}) {
   return (
     <div className="grid gap-4">
-      {items.map(({ submission, job, service, freelancer }) => {
-        const name = freelancer?.displayName || freelancer?.name || "Freelancer";
-        const avatar = freelancer?.avatarUrl || freelancer?.image || "";
-        const status = submission.status as keyof typeof statusConfig;
-        const sc = statusConfig[status] ?? statusConfig.pending;
-        const type = submission.type as keyof typeof typeConfig;
-        const tc = typeConfig[type] ?? typeConfig.project;
-        const TypeIcon = tc.icon;
+      {items.map((row) => {
+        const { submission, job, service, freelancer } = row;
+        const name      = freelancer?.displayName || freelancer?.name || "Freelancer";
+        const avatar    = freelancer?.avatarUrl || freelancer?.image || "";
+        const status    = submission.status as keyof typeof statusConfig;
+        const sc        = statusConfig[status] ?? statusConfig.pending;
+        const type      = submission.type as keyof typeof typeConfig;
+        const tc        = typeConfig[type] ?? typeConfig.project;
+        const TypeIcon  = tc.icon;
         const isPending = status === "pending";
-
-        // Title depends on type
+        const isAccepted = status === "accepted";
+        const hasReview  = reviewedCheck(row);
         const contextTitle = type === "project" ? job?.title : service?.title;
 
         return (
@@ -246,13 +421,17 @@ function SubmissionList({ items, onAction }: { items: any[]; onAction: (id: stri
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    {/* Type badge — the KEY differentiator */}
                     <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${tc.className}`}>
                       <TypeIcon className="h-3 w-3" /> {tc.label}
                     </span>
                     <span className={`inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-full border ${sc.className}`}>
                       {sc.label}
                     </span>
+                    {isAccepted && hasReview && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border bg-amber-100 text-amber-700 border-amber-200">
+                        <Star className="h-3 w-3 fill-amber-500" /> Reviewed
+                      </span>
+                    )}
                   </div>
                   <h3 className="font-bold text-lg text-foreground">{contextTitle ?? "Unknown"}</h3>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -276,23 +455,15 @@ function SubmissionList({ items, onAction }: { items: any[]; onAction: (id: stri
                   </div>
                 )}
                 {submission.linkUrl && (
-                  <a
-                    href={submission.linkUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-primary hover:underline w-fit"
-                  >
+                  <a href={submission.linkUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-primary hover:underline w-fit">
                     <Link2 className="h-4 w-4 shrink-0" />
                     {submission.linkUrl}
                   </a>
                 )}
                 {submission.fileUrl && (
-                  <a
-                    href={submission.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-lg border border-border hover:bg-muted transition-colors w-fit"
-                  >
+                  <a href={submission.fileUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-lg border border-border hover:bg-muted transition-colors w-fit">
                     <FileText className="h-4 w-4 text-primary" />
                     View / Download File
                     <Download className="h-3.5 w-3.5 text-muted-foreground" />
@@ -311,14 +482,26 @@ function SubmissionList({ items, onAction }: { items: any[]; onAction: (id: stri
               {/* Actions */}
               {isPending && (
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <Button onClick={() => onAction(submission.id, "accepted")} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+                  <Button onClick={() => onAction(row, "accepted")} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
                     <CheckCircle2 className="h-4 w-4" /> Accept
                   </Button>
-                  <Button variant="outline" onClick={() => onAction(submission.id, "revision_requested")} className="gap-2 border-orange-300 text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20">
+                  <Button variant="outline" onClick={() => onAction(row, "revision_requested")}
+                    className="gap-2 border-orange-300 text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20">
                     <RotateCcw className="h-4 w-4" /> Request Revision
                   </Button>
-                  <Button variant="outline" onClick={() => onAction(submission.id, "rejected")} className="gap-2 border-destructive/40 text-destructive hover:bg-destructive/5">
+                  <Button variant="outline" onClick={() => onAction(row, "rejected")}
+                    className="gap-2 border-destructive/40 text-destructive hover:bg-destructive/5">
                     <XCircle className="h-4 w-4" /> Reject
+                  </Button>
+                </div>
+              )}
+
+              {/* Leave review button for accepted items */}
+              {isAccepted && !hasReview && (
+                <div className="pt-1 border-t border-border/50">
+                  <Button variant="outline" size="sm" onClick={() => onReview(row)}
+                    className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20">
+                    <Star className="h-3.5 w-3.5 fill-amber-500" /> Leave a Review
                   </Button>
                 </div>
               )}

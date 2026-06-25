@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { users, profiles, freelancerSkills, freelancerWorkExperiences, reviews, freelancerServices } from "@/drizzle/schema";
 import { eq, desc } from "drizzle-orm";
+import { aliasedTable } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 import { ProfilePreviewClient } from "./ProfilePreviewClient";
@@ -45,9 +46,19 @@ export default async function ProfilePreviewPage({ params }: { params: { freelan
     .from(freelancerWorkExperiences)
     .where(eq(freelancerWorkExperiences.userId, freelancerId));
 
+  const reviewerAlias = aliasedTable(users, "reviewer");
   const userReviews = await db
-    .select()
+    .select({
+      id:               reviews.id,
+      rating:           reviews.rating,
+      comment:          reviews.comment,
+      createdAt:        reviews.createdAt,
+      reviewerName:     reviewerAlias.displayName,
+      reviewerFallback: reviewerAlias.name,
+      reviewerAvatar:   reviewerAlias.avatarUrl,
+    })
     .from(reviews)
+    .innerJoin(reviewerAlias, eq(reviews.reviewerId, reviewerAlias.id))
     .where(eq(reviews.revieweeId, freelancerId))
     .orderBy(desc(reviews.createdAt))
     .limit(10);
