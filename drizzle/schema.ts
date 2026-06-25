@@ -471,7 +471,7 @@ export const projectSubmissions = mysqlTable("project_submissions", {
 
 export const refundRequests = mysqlTable("refund_requests", {
   id: varchar({ length: 36 }).default(sql`(uuid())`).notNull(),
-  type: mysqlEnum("rr_type", ["late_delivery"]).notNull(),
+  type: mysqlEnum("rr_type", ["late_delivery", "buyer_rejection"]).notNull(),
   projectId: varchar("project_id", { length: 36 }).references(() => projects.id, { onDelete: "cascade" }),
   serviceOrderId: varchar("service_order_id", { length: 36 }).references(() => serviceOrders.id, { onDelete: "cascade" }),
   buyerId: varchar("buyer_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),

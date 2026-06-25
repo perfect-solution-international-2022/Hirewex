@@ -1,12 +1,13 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { bids, jobs, projects, projectSubmissions, notifications, serviceOrders, freelancerServices } from "@/drizzle/schema";
+import { bids, jobs, projects, projectSubmissions, notifications, serviceOrders, freelancerServices, refundRequests } from "@/drizzle/schema";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { put } from "@vercel/blob";
 import Pusher from "pusher";
+import { getServiceFeePercent } from "@/app/actions/platform-settings";
 
 const pusher = new Pusher({
   appId: process.env.PUSHER_APP_ID!,
@@ -199,9 +200,44 @@ export async function reviewSubmissionAction(
         await db.update(projects)
           .set({ status: "completed", completedAt: new Date().toISOString().slice(0, 19).replace("T", " ") })
           .where(eq(projects.id, submission.projectId));
+      } else if (action === "rejected") {
+        await db.update(projects).set({ status: "disputed" }).where(eq(projects.id, submission.projectId));
       } else {
+        // revision_requested → back to active so freelancer can resubmit
         await db.update(projects).set({ status: "active" }).where(eq(projects.id, submission.projectId));
       }
+    }
+
+    // When buyer rejects → create a refund request for admin to review
+    if (action === "rejected") {
+      const feeRate = (await getServiceFeePercent()) / 100;
+      let refundAmount = 0;
+
+      if (submission.type === "project" && submission.projectId) {
+        const [proj] = await db.select({ amount: projects.amount }).from(projects).where(eq(projects.id, submission.projectId)).limit(1);
+        refundAmount = Number(proj?.amount ?? 0);
+      } else if (submission.type === "order" && submission.serviceOrderId) {
+        const [ord] = await db.select({ price: serviceOrders.price }).from(serviceOrders).where(eq(serviceOrders.id, submission.serviceOrderId)).limit(1);
+        refundAmount = Number(ord?.price ?? 0);
+      }
+
+      const serviceFeeRetained = +(refundAmount * feeRate).toFixed(2);
+      const reason = buyerNote?.trim()
+        ? `Buyer rejected the submitted work. Reason: ${buyerNote.trim()}`
+        : "Buyer rejected the submitted work without providing a reason.";
+
+      await db.insert(refundRequests).values({
+        id: crypto.randomUUID(),
+        type: "buyer_rejection",
+        projectId: submission.projectId ?? null,
+        serviceOrderId: submission.serviceOrderId ?? null,
+        buyerId: submission.buyerId,
+        freelancerId: submission.freelancerId,
+        reason,
+        refundAmount: refundAmount.toFixed(2),
+        serviceFeeRetained: serviceFeeRetained.toFixed(2),
+        status: "pending",
+      });
     }
 
     // Build notification for freelancer
@@ -222,13 +258,13 @@ export async function reviewSubmissionAction(
 
     const notifTitle =
       action === "accepted" ? "Work accepted!" :
-      action === "rejected" ? "Submission rejected" :
+      action === "rejected" ? "Submission rejected — refund review pending" :
       "Revision requested";
     const notifBody =
       action === "accepted"
         ? `Your delivery for "${contextTitle}" has been accepted!`
         : action === "rejected"
-        ? `Your submission for "${contextTitle}" was rejected.${buyerNote ? ` Reason: ${buyerNote}` : ""}`
+        ? `Your submission for "${contextTitle}" was rejected.${buyerNote ? ` Reason: ${buyerNote}` : ""} Admin will review the refund request and make a decision.`
         : `The buyer requested a revision for "${contextTitle}".${buyerNote ? ` Note: ${buyerNote}` : ""}`;
 
     const link = submission.type === "order" ? `/freelancer/orders/${submission.serviceOrderId}` : "/freelancer/hired";

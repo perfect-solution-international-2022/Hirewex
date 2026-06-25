@@ -69,7 +69,16 @@ function RefundCard({ row, onApprove, onReject }: { row: Row; onApprove: (id: st
               ? <Briefcase className="h-4 w-4 shrink-0 text-blue-500" />
               : <Package className="h-4 w-4 shrink-0 text-purple-500" />
             }
-            <span className="font-semibold text-sm truncate">{title}</span>
+            <div className="min-w-0">
+              <span className="font-semibold text-sm truncate block">{title}</span>
+              <span className={`text-[10px] font-semibold uppercase tracking-wide ${
+                refund.type === "buyer_rejection"
+                  ? "text-red-500"
+                  : "text-amber-600"
+              }`}>
+                {refund.type === "buyer_rejection" ? "Buyer rejected work" : "Late delivery"}
+              </span>
+            </div>
           </div>
           <Badge className={`shrink-0 border text-xs font-medium ${status.className}`}>
             <StatusIcon className="mr-1 h-3 w-3" />
@@ -236,7 +245,7 @@ export function RefundClient({ rows }: { rows: Row[] }) {
               {counts.pending} refund{counts.pending !== 1 ? "s" : ""} awaiting your review
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
-              These are flagged due to freelancers failing to deliver work on time. Service fees are non-refundable.
+              Flagged for late delivery or buyer rejection. Review each case and decide. Service fees are non-refundable.
             </p>
           </div>
         </div>
