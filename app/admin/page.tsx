@@ -40,7 +40,7 @@ export default async function AdminPage() {
     })
     .from(transactions)
     .where(sql`created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)`)
-    .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
+    .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m'), DATE_FORMAT(created_at, '%b')`)
     .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m')`),
 
     db.select({ status: projectSubmissions.status, total: count() })
