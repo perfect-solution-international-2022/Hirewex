@@ -368,6 +368,10 @@ export const users = mysqlTable("users", {
 	title: varchar({ length: 191 }),
 	portfolioUrl: text("portfolio_url"),
 	kycStatus: mysqlEnum("kyc_status", ["unverified", "pending", "approved", "rejected"]).default("unverified"),
+	bankName: varchar("bank_name", { length: 100 }),
+	bankAccountHolder: varchar("bank_account_holder", { length: 255 }),
+	bankAccountNumber: varchar("bank_account_number", { length: 50 }),
+	bankBranch: varchar("bank_branch", { length: 100 }),
 },
 (table) => [
 	primaryKey({ columns: [table.id], name: "users_id"}),

@@ -6,18 +6,18 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { freelancerNav } from "@/lib/nav"; 
 import AvatarEditor from "react-avatar-editor";
-import { 
-  Share, Eye, MapPin, MessageCircle, Plus, Briefcase, 
+import {
+  Share, Eye, MapPin, MessageCircle, Plus, Briefcase,
   Award, LayoutGrid, FolderGit2, Pen, User, Camera, Trash2, X, Info, Loader2,
-  FileText, Upload, Download
+  FileText, Upload, Download, Banknote, CheckCircle2
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-import { 
-  getProfileData, updateProfileBasic, saveWorkExperience, 
+import {
+  getProfileData, updateProfileBasic, saveWorkExperience,
   deleteWorkExperience, saveSkill, deleteSkill, uploadAvatarAction,
-  uploadPortfolioAction, deletePortfolioAction
+  uploadPortfolioAction, deletePortfolioAction, saveBankDetails
 } from "@/app/actions/profile";
 
 type WorkExp = { id: string, title: string, type: string, company: string, current: boolean, start: string, end: string, desc: string, skills: string, industry: string };
@@ -80,6 +80,14 @@ export default function ProfilePage() {
   const [bottomToast, setBottomToast] = useState(false);
   const [topToastMsg, setTopToastMsg] = useState("");
 
+  // Bank details
+  const [isEditingBank, setIsEditingBank] = useState(false);
+  const [bankName, setBankName] = useState("");
+  const [bankAccountHolder, setBankAccountHolder] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [bankBranch, setBankBranch] = useState("");
+  const [isSavingBank, setIsSavingBank] = useState(false);
+
   useEffect(() => {
     if (!USER_ID) return;
 
@@ -95,6 +103,11 @@ export default function ProfilePage() {
         if (dbData.aboutText) setAboutText(dbData.aboutText);
         if (dbData.avatarUrl) setAvatarUrl(dbData.avatarUrl);
         if (dbData.portfolioUrl) setPortfolioUrl(dbData.portfolioUrl);
+
+        if (dbData.bankName) setBankName(dbData.bankName);
+        if (dbData.bankAccountHolder) setBankAccountHolder(dbData.bankAccountHolder);
+        if (dbData.bankAccountNumber) setBankAccountNumber(dbData.bankAccountNumber);
+        if (dbData.bankBranch) setBankBranch(dbData.bankBranch);
 
         if (dbData.workExperiences) {
           const formattedWork = dbData.workExperiences.map((w: any) => ({
@@ -511,6 +524,78 @@ export default function ProfilePage() {
                       </div>
                     </>
                   )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* BANK ACCOUNT */}
+          <Card className="border-border/50 bg-card shadow-sm">
+            <CardContent className="p-8">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Banknote className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-bold">Bank Account</h2>
+                </div>
+                {!isEditingBank && (
+                  <Button variant="ghost" size="sm" onClick={() => setIsEditingBank(true)} className="h-8 text-muted-foreground hover:text-foreground">
+                    <Pen className="mr-2 h-3.5 w-3.5" /> {bankAccountNumber ? "Edit" : "Add"}
+                  </Button>
+                )}
+              </div>
+
+              {isEditingBank ? (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Bank Name *</label>
+                      <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm" placeholder="e.g. Commercial Bank" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Branch</label>
+                      <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm" placeholder="e.g. Colombo Main" value={bankBranch} onChange={(e) => setBankBranch(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Account Holder Name *</label>
+                      <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm" placeholder="Full legal name on account" value={bankAccountHolder} onChange={(e) => setBankAccountHolder(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Account Number *</label>
+                      <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm font-mono" placeholder="e.g. 1234567890" value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditingBank(false)}>Cancel</Button>
+                    <Button size="sm" disabled={isSavingBank || !bankName.trim() || !bankAccountHolder.trim() || !bankAccountNumber.trim()} onClick={async () => {
+                      setIsSavingBank(true);
+                      const result = await saveBankDetails({ bankName, bankAccountHolder, bankAccountNumber, bankBranch });
+                      setIsSavingBank(false);
+                      if (result.success) { setIsEditingBank(false); triggerTopToast("Bank details saved!"); }
+                      else triggerTopToast(result.error || "Failed to save.");
+                    }}>
+                      {isSavingBank ? <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> Saving...</> : "Save"}
+                    </Button>
+                  </div>
+                </div>
+              ) : bankAccountNumber ? (
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div><p className="text-xs text-muted-foreground mb-0.5">Bank</p><p className="font-medium">{bankName || "—"}</p></div>
+                  <div><p className="text-xs text-muted-foreground mb-0.5">Branch</p><p className="font-medium">{bankBranch || "—"}</p></div>
+                  <div><p className="text-xs text-muted-foreground mb-0.5">Account Holder</p><p className="font-medium">{bankAccountHolder || "—"}</p></div>
+                  <div><p className="text-xs text-muted-foreground mb-0.5">Account Number</p><p className="font-mono font-medium">{bankAccountNumber}</p></div>
+                  <div className="col-span-2 flex items-center gap-1.5 text-xs text-emerald-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Bank details saved — admin will use these to transfer your payments.
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-muted/10 py-8 text-center cursor-pointer hover:bg-muted/20 transition-colors" onClick={() => setIsEditingBank(true)}>
+                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Banknote className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Add your bank account</p>
+                    <p className="text-xs text-muted-foreground mt-1">Required for receiving payments from completed jobs</p>
+                  </div>
                 </div>
               )}
             </CardContent>

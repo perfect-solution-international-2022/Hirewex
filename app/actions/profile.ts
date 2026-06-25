@@ -56,6 +56,25 @@ export async function updateProfileBasic(data: any) {
   }
 }
 
+// 1b. Bank details
+export async function saveBankDetails(data: {
+  bankName: string;
+  bankAccountHolder: string;
+  bankAccountNumber: string;
+  bankBranch: string;
+}) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+    await db.update(users).set(data).where(eq(users.id, session.user.id));
+    revalidatePath("/settings/profile");
+    return { success: true };
+  } catch (error) {
+    console.error("saveBankDetails error:", error);
+    return { success: false, error: "Failed to save bank details." };
+  }
+}
+
 // 2. Work Experience Actions
 export async function saveWorkExperience(userId: string, workData: any) {
   try {

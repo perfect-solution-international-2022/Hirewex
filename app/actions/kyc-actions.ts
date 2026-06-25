@@ -20,6 +20,10 @@ export async function submitKycApplication(formData: FormData) {
   const fullAddress = formData.get("fullAddress") as string;
   const documentType = formData.get("documentType") as string;
   const documentNumber = formData.get("documentNumber") as string;
+  const bankName = (formData.get("bankName") as string) || null;
+  const bankAccountHolder = (formData.get("bankAccountHolder") as string) || null;
+  const bankAccountNumber = (formData.get("bankAccountNumber") as string) || null;
+  const bankBranch = (formData.get("bankBranch") as string) || null;
 
   // 2. Extract the files
   const frontIdFile = formData.get("frontId") as File;
@@ -65,9 +69,15 @@ export async function submitKycApplication(formData: FormData) {
     selfieUrl: selfieBlob.url,
   });
 
-  // 5. Update User Status
+  // 5. Update User Status + save bank details if provided
   await db.update(users)
-    .set({ kycStatus: "pending" })
+    .set({
+      kycStatus: "pending",
+      ...(bankName && { bankName }),
+      ...(bankAccountHolder && { bankAccountHolder }),
+      ...(bankAccountNumber && { bankAccountNumber }),
+      ...(bankBranch && { bankBranch }),
+    })
     .where(eq(users.id, userId));
 
   return { success: true };

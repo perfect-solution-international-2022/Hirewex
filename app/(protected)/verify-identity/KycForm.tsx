@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  User, MapPin, FileText, ShieldCheck,
+  User, MapPin, FileText, ShieldCheck, Banknote,
   ChevronRight, ChevronLeft, CheckCircle2,
   UploadCloud, X, Image as ImageIcon
 } from "lucide-react";
@@ -17,10 +17,11 @@ import {
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const STEPS = [
-  { id: 1, label: "Personal",   icon: User },
-  { id: 2, label: "Address",    icon: MapPin },
-  { id: 3, label: "Documents",  icon: FileText },
-  { id: 4, label: "Review",     icon: ShieldCheck },
+  { id: 1, label: "Personal",  icon: User },
+  { id: 2, label: "Address",   icon: MapPin },
+  { id: 3, label: "Documents", icon: FileText },
+  { id: 4, label: "Banking",   icon: Banknote },
+  { id: 5, label: "Review",    icon: ShieldCheck },
 ];
 
 // ── Reusable field wrapper ──────────────────────────────────────────
@@ -143,6 +144,12 @@ export function KycForm() {
   const [docType, setDocType]             = useState("passport");
   const [documentNumber, setDocumentNumber] = useState("");
 
+  // Bank state
+  const [bankName, setBankName]                   = useState("");
+  const [bankAccountHolder, setBankAccountHolder] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [bankBranch, setBankBranch]               = useState("");
+
   // File state
   const [frontFile, setFrontFile]   = useState<File | null>(null);
   const [backFile, setBackFile]     = useState<File | null>(null);
@@ -231,7 +238,7 @@ export function KycForm() {
   };
 
   const nextStep = () => {
-    if (validateStep(step)) setStep((s) => Math.min(s + 1, 4));
+    if (validateStep(step)) setStep((s) => Math.min(s + 1, 5));
   };
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
@@ -248,6 +255,10 @@ export function KycForm() {
     if (frontFile)  formData.append("frontId", frontFile);
     if (backFile)   formData.append("backId", backFile);
     if (selfieFile) formData.append("selfie", selfieFile);
+    if (bankName)          formData.append("bankName", bankName);
+    if (bankAccountHolder) formData.append("bankAccountHolder", bankAccountHolder);
+    if (bankAccountNumber) formData.append("bankAccountNumber", bankAccountNumber);
+    if (bankBranch)        formData.append("bankBranch", bankBranch);
 
     startTransition(async () => {
       try {
@@ -317,13 +328,15 @@ export function KycForm() {
             {step === 1 && "Personal details"}
             {step === 2 && "Residential address"}
             {step === 3 && "Identity documents"}
-            {step === 4 && "Review & submit"}
+            {step === 4 && "Bank account"}
+            {step === 5 && "Review & submit"}
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
             {step === 1 && "Must match your government-issued ID exactly."}
             {step === 2 && "Your current residential address."}
             {step === 3 && "Upload clear, uncropped photos — no flash glare."}
-            {step === 4 && "Check everything before submitting. You can't edit after."}
+            {step === 4 && "Where you want to receive payments. You can update this later in your profile."}
+            {step === 5 && "Check everything before submitting. You can't edit after."}
           </p>
         </div>
 
@@ -434,8 +447,67 @@ export function KycForm() {
             </div>
           )}
 
-          {/* STEP 4 — Review */}
+          {/* STEP 4 — Banking */}
           {step === 4 && (
+            <div className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Add your bank account so admin can transfer your earnings directly. This is optional during verification — you can also set it later in your profile.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <label htmlFor="kycBankName" className="text-sm font-medium">Bank Name</label>
+                  <input
+                    id="kycBankName"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    placeholder="e.g. Commercial Bank of Ceylon"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    disabled={isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="kycBankBranch" className="text-sm font-medium">Branch <span className="text-muted-foreground">(optional)</span></label>
+                  <input
+                    id="kycBankBranch"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    placeholder="e.g. Colombo Main"
+                    value={bankBranch}
+                    onChange={(e) => setBankBranch(e.target.value)}
+                    disabled={isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="kycHolder" className="text-sm font-medium">Account Holder Name</label>
+                  <input
+                    id="kycHolder"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    placeholder="Full legal name on account"
+                    value={bankAccountHolder}
+                    onChange={(e) => setBankAccountHolder(e.target.value)}
+                    disabled={isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="kycAccNumber" className="text-sm font-medium">Account Number</label>
+                  <input
+                    id="kycAccNumber"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    placeholder="e.g. 1234567890"
+                    value={bankAccountNumber}
+                    onChange={(e) => setBankAccountNumber(e.target.value)}
+                    disabled={isPending}
+                  />
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-4 text-sm text-amber-800 dark:text-amber-300">
+                <Banknote className="h-4 w-4 shrink-0 mt-0.5" />
+                <p>Your bank details are only visible to the platform admin for payment processing. You can skip this now and add it from your profile settings later.</p>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5 — Review */}
+          {step === 5 && (
             <div className="space-y-6">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">Personal</p>
@@ -480,6 +552,18 @@ export function KycForm() {
                 </div>
               </div>
 
+              {bankAccountNumber && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-2">Bank Account</p>
+                  <div className="rounded-xl border border-border/60 bg-muted/10 px-4">
+                    <ReviewRow label="Bank"           value={bankName} />
+                    <ReviewRow label="Branch"         value={bankBranch || "—"} />
+                    <ReviewRow label="Account holder" value={bankAccountHolder} />
+                    <ReviewRow label="Account number" value={bankAccountNumber} />
+                  </div>
+                </div>
+              )}
+
               {/* Trust note */}
               <div className="flex items-start gap-3 rounded-xl bg-primary/5 border border-primary/20 p-4 text-sm text-muted-foreground">
                 <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -503,9 +587,9 @@ export function KycForm() {
 
           <span className="text-xs text-muted-foreground">Step {step} of {STEPS.length}</span>
 
-          {step < 4 ? (
+          {step < 5 ? (
             <Button type="button" onClick={nextStep} disabled={isPending} className="gap-1.5">
-              Continue <ChevronRight className="h-4 w-4" />
+              {step === 4 && !bankAccountNumber ? "Skip & Continue" : "Continue"} <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button

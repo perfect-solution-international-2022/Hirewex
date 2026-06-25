@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   DollarSign, Briefcase, Package, Calendar, CheckCircle2,
-  ArrowRightLeft, Wallet, AlertTriangle, Clock,
+  ArrowRightLeft, Wallet, AlertTriangle, Clock, Banknote,
 } from "lucide-react";
 import { releasePaymentAction } from "@/app/actions/admin-payments";
 
@@ -93,6 +93,30 @@ function ReleaseDialog({
               <span>${gross.toFixed(2)}</span>
             </div>
           </div>
+
+          {/* Bank details */}
+          {item.bankAccountNumber ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/10 p-4 space-y-1.5 text-sm">
+              <div className="flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-400 mb-2">
+                <Banknote className="h-4 w-4" /> Bank Transfer Details
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <span className="text-muted-foreground">Bank</span>
+                <span className="font-medium">{item.bankName || "—"}</span>
+                <span className="text-muted-foreground">Branch</span>
+                <span className="font-medium">{item.bankBranch || "—"}</span>
+                <span className="text-muted-foreground">Account Holder</span>
+                <span className="font-medium">{item.bankAccountHolder || "—"}</span>
+                <span className="text-muted-foreground">Account Number</span>
+                <span className="font-mono font-bold text-foreground">{item.bankAccountNumber}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
+              <Banknote className="h-4 w-4 shrink-0" />
+              Freelancer has not added bank details yet. Ask them to add via Profile &gt; Bank Account.
+            </div>
+          )}
 
           {/* Fee inputs */}
           <div className="grid grid-cols-2 gap-4">
@@ -305,6 +329,10 @@ function PaymentRow({ row, onRelease }: { row: any; onRelease: ((item: any) => v
                   grossAmount,
                   contextTitle,
                   freelancerName,
+                  bankName:          freelancer?.bankName,
+                  bankAccountHolder: freelancer?.bankAccountHolder,
+                  bankAccountNumber: freelancer?.bankAccountNumber,
+                  bankBranch:        freelancer?.bankBranch,
                 })}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shrink-0"
               >
