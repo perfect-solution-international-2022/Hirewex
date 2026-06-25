@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface FadeInProps {
   children: React.ReactNode;
   delay?: number;
   direction?: "up" | "left" | "right" | "none";
   className?: string;
-  as?: keyof JSX.IntrinsicElements;
+  as?: React.ElementType;
 }
 
 export function FadeIn({
@@ -48,8 +48,7 @@ export function FadeIn({
   }, [delay, direction]);
 
   return (
-    // @ts-ignore
-    <Tag ref={ref} className={className}>
+    <Tag ref={ref as any} className={className}>
       {children}
     </Tag>
   );
