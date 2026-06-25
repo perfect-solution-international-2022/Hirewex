@@ -2,6 +2,14 @@ import {timestamp, mysqlTable, mysqlSchema, AnyMySqlColumn, index, foreignKey, p
 import { sql } from "drizzle-orm"
 
 
+export const platformSettings = mysqlTable("platform_settings", {
+	key: varchar({ length: 100 }).notNull(),
+	value: text().notNull(),
+	updatedAt: datetime("updated_at", { mode: "string" }).default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => [
+	primaryKey({ columns: [table.key], name: "platform_settings_pk" }),
+]);
+
 export const accounts = mysqlTable("accounts", {
 	id: varchar({ length: 36 }).default(sql`(uuid())`).notNull(),
 	userId: varchar({ length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" } ),

@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { CheckoutClient } from "./CheckoutClient";
+import { getServiceFeePercent } from "@/app/actions/platform-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +36,14 @@ export default async function BidCheckoutPage({ params }: { params: { bidId: str
   // Security: only the buyer who owns this job can view checkout
   if (data.job.buyerId !== session.user.id) redirect("/my-bids");
 
+  const serviceFeePercent = await getServiceFeePercent();
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="flex min-h-screen flex-col bg-muted/10">
         <SiteHeader />
         <main className="container mx-auto flex-1 px-4 py-12 max-w-4xl">
-          <CheckoutClient data={data} />
+          <CheckoutClient data={data} serviceFeePercent={serviceFeePercent} />
         </main>
         <SiteFooter />
       </div>

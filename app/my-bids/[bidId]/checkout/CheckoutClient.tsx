@@ -32,7 +32,7 @@ function PayButton({ total }: { total: number }) {
   );
 }
 
-export function CheckoutClient({ data }: { data: any }) {
+export function CheckoutClient({ data, serviceFeePercent = 5 }: { data: any; serviceFeePercent?: number }) {
   const { bid, job, category, freelancer, profile } = data;
 
   const name     = freelancer?.displayName || freelancer?.name || "Freelancer";
@@ -43,7 +43,7 @@ export function CheckoutClient({ data }: { data: any }) {
   const headline = profile?.headline || freelancer?.title || category?.name;
 
   const amount      = Number(bid.amount);
-  const platformFee = Math.round(amount * 0.05 * 100) / 100;
+  const platformFee = Math.round(amount * (serviceFeePercent / 100) * 100) / 100;
   const total       = amount + platformFee;
 
   return (
@@ -163,7 +163,7 @@ export function CheckoutClient({ data }: { data: any }) {
                   <span className="font-medium text-foreground">${amount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Service fee (5%)</span>
+                  <span className="text-muted-foreground">Service fee ({serviceFeePercent % 1 === 0 ? serviceFeePercent : serviceFeePercent.toFixed(1)}%)</span>
                   <span className="font-medium text-foreground">${platformFee.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-border/50 pt-2.5 flex justify-between items-center">

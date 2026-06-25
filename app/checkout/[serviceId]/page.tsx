@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Check, ShieldCheck, Clock, RefreshCw, ImageIcon } from "lucide-react";
 import { createOnePayCheckout } from "@/app/actions/onepay";
+import { getServiceFeePercent } from "@/app/actions/platform-settings";
 import { PayButton } from "./PayButton";
 
 export const metadata = {
@@ -54,7 +55,7 @@ export default async function CheckoutPage({
   const chosenPackage = packages[tier];
 
   const basePrice = Number(chosenPackage.price);
-  const serviceFeeRate = 0.05;
+  const serviceFeeRate = (await getServiceFeePercent()) / 100;
   const serviceFee = basePrice * serviceFeeRate;
   const total = basePrice + serviceFee;
 
@@ -186,7 +187,7 @@ export default async function CheckoutPage({
                     <span className="font-medium text-foreground">{formatCurrency(basePrice)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Service Fee (5%)</span>
+                    <span className="text-muted-foreground">Service Fee ({(serviceFeeRate * 100).toFixed(serviceFeeRate * 100 % 1 === 0 ? 0 : 1)}%)</span>
                     <span className="font-medium text-foreground">{formatCurrency(serviceFee)}</span>
                   </div>
                 </div>
