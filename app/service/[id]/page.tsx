@@ -89,8 +89,14 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
   const displayName = user.displayName || user.name || "Freelancer";
   const headline = profile?.headline || user.title || service.category;
   const avatar = profile?.avatarUrl || user.image || user.avatarUrl || "";
-  const rating = profile?.rating ? Number(profile.rating).toFixed(1) : "5.0";
-  const reviewCount = profile?.totalReviews || 0;
+
+  // Use actual count + average from the reviews we fetched (source of truth)
+  const reviewCount = freelancerReviews.length;
+  const rating = reviewCount > 0
+    ? (freelancerReviews.reduce((s, r) => s + r.rating, 0) / reviewCount).toFixed(1)
+    : profile?.rating
+      ? Number(profile.rating).toFixed(1)
+      : null;
 
   const allFeatures = Array.from(new Set([
     ...(packages.basic?.features || []),
@@ -164,9 +170,15 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
                   <span className="text-border">·</span>
 
                   <div className="flex items-center gap-1 text-sm">
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    <span className="font-semibold text-foreground">{rating}</span>
-                    <span className="text-muted-foreground">({reviewCount} reviews)</span>
+                    {rating ? (
+                      <>
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span className="font-semibold text-foreground">{rating}</span>
+                        <span className="text-muted-foreground">({reviewCount} {reviewCount === 1 ? "review" : "reviews"})</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">No reviews yet</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -201,9 +213,15 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">{headline}</p>
                     <div className="flex items-center gap-1 text-sm">
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      <span className="font-semibold">{rating}</span>
-                      <span className="text-muted-foreground">({reviewCount} reviews)</span>
+                      {rating ? (
+                        <>
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          <span className="font-semibold">{rating}</span>
+                          <span className="text-muted-foreground">({reviewCount} {reviewCount === 1 ? "review" : "reviews"})</span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">No reviews yet</span>
+                      )}
                     </div>
                   </div>
                   {!isOwner && (
@@ -281,7 +299,7 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
             <section className="mb-12 space-y-6">
               <h2 className="text-xl font-bold pb-3 border-b border-border/50 flex items-center gap-2">
                 Reviews
-                <span className="text-base font-normal text-muted-foreground">({reviewCount})</span>
+                <span className="text-base font-normal text-muted-foreground">({reviewCount} {reviewCount === 1 ? "review" : "reviews"})</span>
               </h2>
 
               {/* Write a review — only for buyers who have a paid order */}
