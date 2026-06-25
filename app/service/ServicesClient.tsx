@@ -168,17 +168,22 @@ export function ServicesClient({ initialServices, currentUserId }: { initialServ
             ) : (
               // UPDATED: Added xl:grid-cols-4 to fit 4 cards on extra large screens
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredServices.map(({ service, user }) => {
+                {filteredServices.map(({ service, user, profile }: any) => {
                   const packages = service.packages as any;
                   const startingPrice = packages?.basic?.price || "0";
-                  
+
                   const images = service.images as string[] | null;
                   const thumbnail = images && images.length > 0 ? images[0] : null;
 
                   const authorName = user?.displayName || user?.name || "Freelancer";
                   const authorAvatar = user?.avatarUrl || user?.image || "";
                   const authorHeadline = user?.title || service.category;
-                  
+
+                  const reviewCount = profile?.totalReviews ?? 0;
+                  const rating = reviewCount > 0 && profile?.rating
+                    ? Number(profile.rating).toFixed(1)
+                    : null;
+
                   const isOwner = currentUserId === service.freelancerId;
 
                   return (
@@ -232,10 +237,14 @@ export function ServicesClient({ initialServices, currentUserId }: { initialServ
                           
                           {/* Footer / Price */}
                           <div className="flex items-end justify-between pt-3 border-t border-border/50 mt-auto">
-                            <span className="inline-flex items-center gap-1.5 text-foreground font-semibold text-sm">
-                              <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> 
-                              5.0 <span className="text-muted-foreground font-normal text-xs">(0)</span>
-                            </span>
+                            {rating ? (
+                              <span className="inline-flex items-center gap-1.5 text-foreground font-semibold text-sm">
+                                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                                {rating} <span className="text-muted-foreground font-normal text-xs">({reviewCount})</span>
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No reviews yet</span>
+                            )}
                             <div className="text-right">
                               <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wide block mb-0.5">
                                 Starting at

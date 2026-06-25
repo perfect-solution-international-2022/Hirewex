@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { freelancerServices, users } from "@/drizzle/schema";
+import { freelancerServices, users, profiles } from "@/drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { auth } from "@/auth";
 import { Suspense } from "react";
@@ -12,7 +12,6 @@ export const metadata = {
 export default async function ServicesPage() {
   const session = await auth();
 
-  // Only fetch approved services
   const liveServices = await db
     .select({
       service: freelancerServices,
@@ -22,10 +21,15 @@ export default async function ServicesPage() {
         avatarUrl: users.avatarUrl,
         image: users.image,
         title: users.title,
-      }
+      },
+      profile: {
+        rating: profiles.rating,
+        totalReviews: profiles.totalReviews,
+      },
     })
     .from(freelancerServices)
     .innerJoin(users, eq(freelancerServices.freelancerId, users.id))
+    .leftJoin(profiles, eq(users.id, profiles.id))
     .where(eq(freelancerServices.status, "approved"))
     .orderBy(desc(freelancerServices.createdAt));
 
