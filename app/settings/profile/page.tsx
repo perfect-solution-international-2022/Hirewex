@@ -9,7 +9,7 @@ import AvatarEditor from "react-avatar-editor";
 import {
   Share, Eye, MapPin, MessageCircle, Plus, Briefcase,
   Award, LayoutGrid, FolderGit2, Pen, User, Camera, Trash2, X, Info, Loader2,
-  FileText, Upload, Download, Banknote, CheckCircle2
+  FileText, Upload, Download, Banknote, CheckCircle2, Check
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -723,21 +723,24 @@ export default function ProfilePage() {
 
         {/* RIGHT COLUMN - SIDEBAR */}
         <div className="flex flex-col gap-6">
-          <Card className="border-border/50 bg-card shadow-sm">
-            <CardContent className="p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold">Profile Strength</h2>
-                <span className="text-lg font-bold">7<span className="text-sm font-medium text-muted-foreground">/12</span></span>
-              </div>
-              <div className="mb-6 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div className="h-full w-[58%] rounded-full bg-primary" />
-              </div>
-              <div className="space-y-3">
-                <StrengthItem text="Showcase portfolio" icon={<LayoutGrid className="h-4 w-4" />} />
-                <StrengthItem text="List certifications" icon={<Award className="h-4 w-4" />} />
-              </div>
-            </CardContent>
-          </Card>
+          <ProfileStrengthCard
+            avatarUrl={avatarUrl}
+            displayName={displayName}
+            titleText={titleText}
+            locationText={locationText}
+            langText={langText}
+            aboutText={aboutText}
+            workList={workList}
+            skillsList={skillsList}
+            portfolioUrl={portfolioUrl}
+            bankAccountNumber={bankAccountNumber}
+            onEditAbout={() => setIsEditingAbout(true)}
+            onAddWork={() => setIsAddingWork(true)}
+            onAddSkill={() => setIsAddingSkill(true)}
+            onUploadPortfolio={() => portfolioInputRef.current?.click()}
+            onAddBank={() => setIsEditingBank(true)}
+            onEditPhoto={() => avatarInputRef.current?.click()}
+          />
         </div>
       </div>
     </DashboardShell>
@@ -757,10 +760,88 @@ function ActionCard({ title, desc, btnText, icon, onClick }: any) {
   );
 }
 
-function StrengthItem({ text, icon }: any) {
+function ProfileStrengthCard({
+  avatarUrl, displayName, titleText, locationText, langText, aboutText,
+  workList, skillsList, portfolioUrl, bankAccountNumber,
+  onEditAbout, onAddWork, onAddSkill, onUploadPortfolio, onAddBank, onEditPhoto,
+}: {
+  avatarUrl: string | null; displayName: string; titleText: string;
+  locationText: string; langText: string; aboutText: string;
+  workList: any[]; skillsList: any[]; portfolioUrl: string | null;
+  bankAccountNumber: string;
+  onEditAbout: () => void; onAddWork: () => void; onAddSkill: () => void;
+  onUploadPortfolio: () => void; onAddBank: () => void; onEditPhoto: () => void;
+}) {
+  const criteria = [
+    { label: "Profile photo", done: !!avatarUrl, action: onEditPhoto, icon: <User className="h-4 w-4" /> },
+    { label: "Display name", done: !!displayName.trim() && displayName !== "Add display name", action: undefined, icon: <Pen className="h-4 w-4" /> },
+    { label: "Professional title", done: !!titleText.trim() && titleText !== "Add title", action: undefined, icon: <Briefcase className="h-4 w-4" /> },
+    { label: "Location", done: !!locationText.trim(), action: undefined, icon: <MapPin className="h-4 w-4" /> },
+    { label: "Language", done: !!langText.trim(), action: undefined, icon: <MessageCircle className="h-4 w-4" /> },
+    { label: "About / Bio", done: aboutText.trim().length >= 20, action: onEditAbout, icon: <FileText className="h-4 w-4" /> },
+    { label: "Work experience", done: workList.length > 0, action: onAddWork, icon: <Briefcase className="h-4 w-4" /> },
+    { label: "Skills (2+)", done: skillsList.length >= 2, action: onAddSkill, icon: <Award className="h-4 w-4" /> },
+    { label: "Portfolio uploaded", done: !!portfolioUrl, action: onUploadPortfolio, icon: <Upload className="h-4 w-4" /> },
+    { label: "Bank details", done: !!bankAccountNumber.trim(), action: onAddBank, icon: <Banknote className="h-4 w-4" /> },
+  ];
+
+  const done = criteria.filter((c) => c.done).length;
+  const total = criteria.length;
+  const pct = Math.round((done / total) * 100);
+
+  const barColor = pct < 40 ? "bg-destructive" : pct < 70 ? "bg-amber-500" : pct < 100 ? "bg-primary" : "bg-emerald-500";
+  const label = pct < 40 ? "Beginner" : pct < 70 ? "Intermediate" : pct < 100 ? "Advanced" : "Complete";
+
+  const pending = criteria.filter((c) => !c.done);
+  const completed = criteria.filter((c) => c.done);
+
   return (
-    <div className="flex cursor-pointer items-center gap-3 rounded-lg border border-border/60 p-3 transition hover:bg-muted/30">
-      <div className="text-muted-foreground">{icon}</div><span className="text-sm font-medium">{text}</span>
-    </div>
+    <Card className="border-border/50 bg-card shadow-sm">
+      <CardContent className="p-6">
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="text-lg font-bold">Profile Strength</h2>
+          <span className="text-lg font-bold">{done}<span className="text-sm font-medium text-muted-foreground">/{total}</span></span>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">{label}</p>
+        <div className="mb-5 h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+        </div>
+
+        {pending.length > 0 && (
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">To do</p>
+            <div className="space-y-2">
+              {pending.map((c) => (
+                <button
+                  key={c.label}
+                  onClick={c.action}
+                  disabled={!c.action}
+                  className="w-full flex items-center gap-3 rounded-lg border border-dashed border-border/60 p-2.5 text-left transition hover:bg-muted/30 disabled:cursor-default disabled:hover:bg-transparent"
+                >
+                  <div className="shrink-0 h-7 w-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground">{c.icon}</div>
+                  <span className="text-sm font-medium text-foreground/80">{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {completed.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Done</p>
+            <div className="space-y-1.5">
+              {completed.map((c) => (
+                <div key={c.label} className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg bg-emerald-500/5">
+                  <div className="shrink-0 h-5 w-5 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                    <Check className="h-3 w-3 text-emerald-600" />
+                  </div>
+                  <span className="text-sm text-muted-foreground line-through">{c.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
