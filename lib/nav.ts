@@ -115,16 +115,10 @@ export const adminNav = [
     { title: "Wallet", url: "/admin/wallet", icon: Wallet },
     { title: "Payment Release", url: "/admin/payments", icon: ArrowRightLeft },
     { title: "Transactions", url: "/admin/transactions", icon: Receipt },
-    { title: "Deposits", url: "/admin/deposits", icon: Receipt },
-    { title: "Withdrawals", url: "/admin/withdrawals", icon: ArrowDownToLine },
-  ]},
-  { label: "Support", items: [
-    { title: "Tickets", url: "/admin/tickets", icon: LifeBuoy }
   ]},
   { label: "System", items: [
     { title: "General Settings", url: "/admin/settings", icon: Settings },
     { title: "Logo & Favicon", url: "/admin/branding", icon: ImageIcon },
-    { title: "Notifications", url: "/admin/notifications", icon: Bell },
     { title: "KYC", url: "/admin/kyc", icon: Shield },
     { title: "Policies", url: "/admin/policies", icon: FileText },
   ]},
