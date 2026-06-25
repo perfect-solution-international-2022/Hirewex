@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { db } from "@/lib/db";
 import { freelancerServices, users, profiles } from "@/drizzle/schema";
 import { eq, desc } from "drizzle-orm";

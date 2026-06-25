@@ -20,7 +20,7 @@ export const metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // revalidate every minute
 
 export default async function FreelancerJobsPage() {
   const liveJobs = await db

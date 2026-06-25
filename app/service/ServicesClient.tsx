@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, ChevronDown, Star, ImageIcon } from "lucide-react";
+import Image from "next/image";
 import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 
 export function ServicesClient({ initialServices, currentUserId }: { initialServices: any[], currentUserId?: string }) {
@@ -199,10 +200,12 @@ export function ServicesClient({ initialServices, currentUserId }: { initialServ
                           )}
 
                           {thumbnail ? (
-                            <img 
-                              src={thumbnail} 
-                              alt={service.title} 
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                            <Image
+                              src={thumbnail}
+                              alt={service.title}
+                              fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-muted-foreground/30 bg-muted/50">

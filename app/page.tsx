@@ -1,3 +1,5 @@
+export const revalidate = 300; // revalidate every 5 minutes
+
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";

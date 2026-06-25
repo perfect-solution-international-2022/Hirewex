@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ChevronDown } from "lucide-react";
+import Image from "next/image";
 
 // Time formatter
 function timeAgo(dateString: string) {
@@ -306,7 +307,7 @@ export function JobsClient({ initialJobs }: { initialJobs: any[] }) {
                   <div className="flex items-center gap-2.5 mb-3">
                     <div className="h-6 w-6 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center shrink-0 border border-border/50">
                       {posterPic ? (
-                        <img src={posterPic} alt={posterName} className="h-full w-full object-cover" />
+                        <Image src={posterPic} alt={posterName} width={24} height={24} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-[10px] font-bold text-primary">
                           {posterName.charAt(0).toUpperCase()}

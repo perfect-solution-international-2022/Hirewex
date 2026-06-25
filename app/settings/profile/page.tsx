@@ -5,7 +5,8 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { freelancerNav } from "@/lib/nav"; 
-import AvatarEditor from "react-avatar-editor";
+import dynamic from "next/dynamic";
+const AvatarEditor = dynamic(() => import("react-avatar-editor"), { ssr: false });
 import {
   Share, Eye, MapPin, MessageCircle, Plus, Briefcase,
   Award, LayoutGrid, FolderGit2, Pen, User, Camera, Trash2, X, Info, Loader2,

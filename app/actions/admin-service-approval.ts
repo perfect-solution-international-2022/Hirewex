@@ -21,6 +21,8 @@ export async function approveService(serviceId: string) {
     .where(eq(freelancerServices.id, serviceId));
   revalidatePath("/admin/service-approval");
   revalidatePath("/freelancer/projects");
+  revalidatePath("/service");
+  revalidatePath("/");
 }
 
 export async function denyService(serviceId: string) {
@@ -31,6 +33,7 @@ export async function denyService(serviceId: string) {
     .where(eq(freelancerServices.id, serviceId));
   revalidatePath("/admin/service-approval");
   revalidatePath("/freelancer/projects");
+  revalidatePath("/service");
 }
 
 // --- UPDATED FUNCTION ---
