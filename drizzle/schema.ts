@@ -190,6 +190,7 @@ export const messages = mysqlTable("messages", {
 	senderId: varchar("sender_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" } ),
 	body: text().notNull(),
 	readAt: datetime("read_at", { mode: 'string'}),
+	editedAt: datetime("edited_at", { mode: 'string'}),
 	createdAt: datetime("created_at", { mode: 'string'}).default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 },
 (table) => [

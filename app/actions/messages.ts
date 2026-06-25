@@ -115,6 +115,45 @@ export async function markMessagesAsRead(conversationId: string) {
   }
 }
 
+export async function editMessage(messageId: string, newBody: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const trimmed = newBody.trim();
+  if (!trimmed) throw new Error("Message cannot be empty");
+
+  // Fetch the message and verify ownership + unread
+  const [msg] = await db
+    .select({ senderId: messages.senderId, readAt: messages.readAt, conversationId: messages.conversationId })
+    .from(messages)
+    .where(eq(messages.id, messageId))
+    .limit(1);
+
+  if (!msg) throw new Error("Message not found");
+  if (msg.senderId !== session.user.id) throw new Error("Forbidden");
+  if (msg.readAt) throw new Error("Cannot edit a message that has already been read");
+
+  const editedAt = toMySQLDate(new Date());
+
+  await db.update(messages)
+    .set({ body: trimmed, editedAt })
+    .where(and(
+      eq(messages.id, messageId),
+      eq(messages.senderId, session.user.id),
+      isNull(messages.readAt),
+    ));
+
+  try {
+    await pusherServer.trigger(`chat-${msg.conversationId}`, "message-edited", {
+      id: messageId,
+      body: trimmed,
+      editedAt,
+    });
+  } catch {}
+
+  return { success: true };
+}
+
 export async function clearChatHistory(conversationId: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
