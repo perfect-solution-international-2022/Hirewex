@@ -313,9 +313,10 @@ export function SiteHeader() {
                     </Button>
                   )}
 
+                  <div className="hidden md:block">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="ml-2 hidden md:flex items-center gap-2 rounded-full border border-border bg-background py-1 pl-1 pr-3 text-sm font-medium shadow-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                      <button className="ml-2 flex items-center gap-2 rounded-full border border-border bg-background py-1 pl-1 pr-3 text-sm font-medium shadow-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                         {avatar ? (
                           <img src={avatar} alt="Profile" className="h-7 w-7 rounded-full object-cover border border-border/50 bg-background" />
                         ) : (
@@ -389,6 +390,7 @@ export function SiteHeader() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  </div>
                 </>
               ) : (
                 <div className="flex items-center gap-3 ml-2">
