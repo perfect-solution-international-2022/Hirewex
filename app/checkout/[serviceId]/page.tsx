@@ -27,6 +27,12 @@ export default async function CheckoutPage({
     redirect("/auth");
   }
 
+  // Block unverified / pending users from checkout
+  const kycStatus = (session.user as any).kycStatus ?? "unverified";
+  if (kycStatus !== "approved") {
+    redirect("/verify-identity");
+  }
+
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 

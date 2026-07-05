@@ -206,7 +206,17 @@ export function SiteHeader() {
                         </button>
                       </div>
                     ) : (
-                      <div className="px-4 py-4">
+                      <div className="flex flex-col gap-2 px-4 py-4">
+                        {kycStatus !== "pending" && (
+                          <Button size="sm" asChild className="w-full bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setMobileOpen(false)}>
+                            <Link href="/verify-identity"><ShieldAlert className="mr-2 h-4 w-4" /> Verify Account</Link>
+                          </Button>
+                        )}
+                        {kycStatus === "pending" && (
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-3 py-2 rounded-md border border-amber-200 dark:border-amber-800">
+                            <ShieldAlert className="h-3.5 w-3.5" /> ID Under Review
+                          </div>
+                        )}
                         <Button variant="outline" size="sm" className="w-full" onClick={() => { setMobileOpen(false); setShowSignOutModal(true); }}>
                           <LogOut className="mr-2 h-4 w-4" /> Sign out
                         </Button>
@@ -393,11 +403,21 @@ export function SiteHeader() {
                   </div>
                 </>
               ) : (
-                <div className="flex items-center gap-3 ml-2">
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800">
-                    <ShieldAlert className="h-3.5 w-3.5" />
-                    {kycStatus === "pending" ? "Reviewing ID" : "Action Required"}
-                  </div>
+                <div className="flex items-center gap-2 ml-2">
+                  {kycStatus === "pending" ? (
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1.5 rounded-md border border-amber-200 dark:border-amber-800">
+                      <ShieldAlert className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Under Review</span>
+                    </div>
+                  ) : (
+                    <Link
+                      href="/verify-identity"
+                      className="flex items-center gap-1.5 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 px-2.5 py-1.5 rounded-md transition-colors"
+                    >
+                      <ShieldAlert className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Verify Account</span>
+                    </Link>
+                  )}
                   <Button variant="outline" size="sm" onClick={() => setShowSignOutModal(true)}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span className="hidden sm:inline">Sign out</span>
