@@ -228,7 +228,7 @@ export function SiteHeader() {
                         <Link href="/auth">Sign in</Link>
                       </Button>
                       <Button size="sm" asChild className="w-full" onClick={() => setMobileOpen(false)}>
-                        <Link href="/auth?mode=signup">Join</Link>
+                        <Link href="/auth?mode=signup">Sign up</Link>
                       </Button>
                     </div>
                   )}
@@ -427,7 +427,7 @@ export function SiteHeader() {
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex"><Link href="/auth">Sign in</Link></Button>
-                <Button size="sm" asChild className="hidden md:inline-flex"><Link href="/auth?mode=signup">Join</Link></Button>
+                <Button size="sm" asChild className="hidden md:inline-flex"><Link href="/auth?mode=signup">Sign up</Link></Button>
               </>
             )}
           </div>
