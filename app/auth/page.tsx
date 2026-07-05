@@ -337,10 +337,6 @@ function AuthContent() {
                       {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying…</> : "Sign in"}
                     </Button>
                   </form>
-                  <Divider />
-                  <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={busy}>
-                    Continue with Google
-                  </Button>
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-6 space-y-4">
@@ -353,10 +349,6 @@ function AuthContent() {
                       {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account…</> : "Create account"}
                     </Button>
                   </form>
-                  <Divider />
-                  <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={busy}>
-                    Continue with Google
-                  </Button>
                 </TabsContent>
               </Tabs>
             </>
