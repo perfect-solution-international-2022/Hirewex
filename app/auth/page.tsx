@@ -45,7 +45,7 @@ function PinInput({ value, onChange, disabled }: { value: string; onChange: (v: 
   }
 
   return (
-    <div ref={containerRef} className="flex gap-2 justify-center" onPaste={handlePaste}>
+    <div ref={containerRef} className="flex gap-1.5 sm:gap-2 justify-center" onPaste={handlePaste}>
       {digits.map((d, i) => (
         <input
           key={i}
@@ -57,7 +57,7 @@ function PinInput({ value, onChange, disabled }: { value: string; onChange: (v: 
           onChange={(e) => handleChange(i, e)}
           onKeyDown={(e) => handleKey(i, e)}
           onFocus={(e) => e.target.select()}
-          className={`h-14 w-11 rounded-xl border-2 bg-muted text-center text-2xl font-bold outline-none transition-all
+          className={`h-12 w-10 sm:h-14 sm:w-11 rounded-xl border-2 bg-muted text-center text-xl sm:text-2xl font-bold outline-none transition-all
             ${d ? "border-primary text-foreground" : "border-border text-muted-foreground"}
             ${disabled ? "opacity-50 cursor-not-allowed" : "focus:border-primary focus:ring-2 focus:ring-primary/20"}
           `}
@@ -326,7 +326,7 @@ function AuthContent() {
 
       {/* Right panel */}
       <div className="flex min-h-screen lg:min-h-0 items-center justify-center p-6 bg-background">
-        <Card className="w-full max-w-md p-8">
+        <Card className="w-full max-w-md p-6 sm:p-8">
           <div className="lg:hidden mb-6 flex justify-center"><Logo /></div>
 
           {/* ── PIN verification screen ── */}
