@@ -4,10 +4,12 @@ import { users } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT) || 465,
+  secure: (Number(process.env.SMTP_PORT) || 465) === 465,
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
@@ -26,7 +28,7 @@ export async function getUserEmail(userId: string): Promise<{ email: string; nam
 async function send(to: string, subject: string, html: string) {
   try {
     await transporter.sendMail({
-      from: `"Hirewex" <${process.env.GMAIL_USER}>`,
+      from: `"Hirewex" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
       to, subject, html,
     });
   } catch (err) {
