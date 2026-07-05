@@ -257,7 +257,7 @@ export function ProfilePreviewClient({
           </div>
 
           {/* RIGHT — stats sidebar */}
-          <div className="lg:col-span-1">
+          <div className="order-first lg:order-none lg:col-span-1">
             <Card className="sticky top-24 border-border/60 shadow-sm">
               <CardContent className="p-5 space-y-5">
                 <h3 className="text-sm font-bold text-foreground">Stats</h3>

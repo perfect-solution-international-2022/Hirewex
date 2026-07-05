@@ -75,7 +75,33 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ job
 
       <main className="container mx-auto px-4 py-10 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          
+
+          {/* CTA sidebar — shown at top on mobile, right column on desktop */}
+          <div className="lg:hidden">
+            <div className="bg-[#111827] text-white rounded-xl p-5 shadow-xl border border-white/10">
+              <h2 className="text-2xl font-bold tracking-tight mb-1">
+                {job.budgetMin ? `$${Number(job.budgetMin).toLocaleString()}` : "Open"}
+              </h2>
+              <p className="text-slate-300 text-sm mb-4">{job.title}</p>
+              <div className="space-y-3">
+                {isOwner ? (
+                  <div className="text-center text-sm text-slate-400 py-2 border border-white/10 rounded-lg">This is your job posting</div>
+                ) : (
+                  <Button asChild className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12">
+                    <Link href={`/jobs/${jobId}/bid`}>Submit Proposal & Bid <ChevronRight className="h-4 w-4 ml-1" /></Link>
+                  </Button>
+                )}
+                {!isOwner && job.buyerId && (
+                  <form action={createOrGetConversation.bind(null, job.buyerId, "buyer", job.id, "job")}>
+                    <Button type="submit" variant="outline" className="w-full bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white h-12 font-semibold">
+                      Message buyer
+                    </Button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* LEFT */}
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-card border border-border/50 rounded-xl p-6 sm:p-8 shadow-sm">
@@ -228,8 +254,8 @@ export default async function JobDetailsPage({ params }: { params: Promise<{ job
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="lg:col-span-1 sticky top-8">
+          {/* RIGHT — desktop only */}
+          <div className="hidden lg:block lg:col-span-1 sticky top-8">
             <div className="bg-[#111827] text-white rounded-xl p-6 shadow-xl border border-white/10">
               <h2 className="text-3xl font-bold tracking-tight mb-2">
                 {job.budgetMin ? `$${Number(job.budgetMin).toLocaleString()}` : "Open"}

@@ -441,12 +441,12 @@ export default async function ServiceDetailsPage({ params }: { params: { id: str
 
           </div>
 
-          <div className="lg:w-1/3 hidden lg:block">
-            <PricingSidebar 
-              packages={service.packages} 
+          <div className="lg:w-1/3 lg:block">
+            <PricingSidebar
+              packages={service.packages}
               freelancerId={service.freelancerId}
-              serviceId={serviceId} // <--- GUARANTEED FIXED HERE
-              isOwner={currentUserId === service.freelancerId} 
+              serviceId={serviceId}
+              isOwner={currentUserId === service.freelancerId}
             />
           </div>
 

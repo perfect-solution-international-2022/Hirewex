@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import Image from "next/image";
 
 // Time formatter
@@ -39,6 +39,7 @@ export function JobsClient({ initialJobs }: { initialJobs: any[] }) {
   
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const toggleSkill = (skill: string) => {
     setSelectedSkills(prev => 
@@ -130,8 +131,38 @@ export function JobsClient({ initialJobs }: { initialJobs: any[] }) {
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
+      {/* Mobile filter toggle */}
+      <div className="lg:hidden flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="flex items-center gap-2"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          {filtersOpen ? "Hide Filters" : "Show Filters"}
+        </Button>
+        {(selectedSkills.length > 0 || selectedScopes.length > 0 || selectedCategory !== "All" || minBudget || maxBudget) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchQuery("");
+              setMinBudget("");
+              setMaxBudget("");
+              setSelectedCategory("All");
+              setSelectedSkills([]);
+              setSelectedScopes([]);
+            }}
+            className="text-xs text-muted-foreground flex items-center gap-1"
+          >
+            <X className="h-3 w-3" /> Clear all
+          </Button>
+        )}
+      </div>
+
       {/* ================= LEFT SIDEBAR (FILTERS) ================= */}
-      <aside className="w-full lg:w-64 shrink-0 space-y-8">
+      <aside className={`w-full lg:w-64 shrink-0 space-y-8 ${filtersOpen ? "block" : "hidden"} lg:block`}>
         
         {/* Budget Filter */}
         <div className="space-y-4">

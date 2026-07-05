@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, ChevronDown, Star, ImageIcon } from "lucide-react";
+import { Search, ChevronDown, Star, ImageIcon, SlidersHorizontal, X } from "lucide-react";
 import Image from "next/image";
 import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 
@@ -23,6 +23,7 @@ export function ServicesClient({ initialServices, currentUserId }: { initialServ
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // --- DYNAMIC CATEGORY EXTRACTION ---
   const categoriesList = useMemo(() => {
@@ -74,9 +75,32 @@ export function ServicesClient({ initialServices, currentUserId }: { initialServ
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          
+
+          {/* Mobile filter toggle */}
+          <div className="lg:hidden flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFiltersOpen((v) => !v)}
+              className="flex items-center gap-2"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {filtersOpen ? "Hide Filters" : "Show Filters"}
+            </Button>
+            {(selectedCategory !== "All" || minPrice || maxPrice) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setSearchQuery(""); setMinPrice(""); setMaxPrice(""); setSelectedCategory("All"); }}
+                className="text-xs text-muted-foreground flex items-center gap-1"
+              >
+                <X className="h-3 w-3" /> Clear all
+              </Button>
+            )}
+          </div>
+
           {/* ================= LEFT SIDEBAR (FILTERS) ================= */}
-          <aside className="w-full lg:w-64 shrink-0 space-y-8">
+          <aside className={`w-full lg:w-64 shrink-0 space-y-8 ${filtersOpen ? "block" : "hidden"} lg:block`}>
             
             {/* Price Filter */}
             <div className="space-y-4">
