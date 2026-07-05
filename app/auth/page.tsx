@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -14,55 +14,25 @@ import { registerUser, verifyEmailPin, resendVerificationPin } from "@/app/actio
 
 // ── PIN digit input ────────────────────────────────────────────────────────────
 function PinInput({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const digits = value.padEnd(6, "").split("").slice(0, 6);
-
-  function getInput(i: number): HTMLInputElement | null {
-    return (containerRef.current?.querySelectorAll("input") ?? [])[i] ?? null;
-  }
-
-  function handleKey(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Backspace") {
-      const next = value.slice(0, i) + value.slice(i + 1);
-      onChange(next);
-      if (i > 0) setTimeout(() => getInput(i - 1)?.focus(), 0);
-    }
-  }
-
-  function handleChange(i: number, e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.replace(/\D/g, "");
-    if (!raw) return;
-    const char = raw[raw.length - 1];
-    const next = (value.slice(0, i) + char + value.slice(i + 1)).slice(0, 6);
-    onChange(next);
-    if (i < 5) setTimeout(() => getInput(i + 1)?.focus(), 0);
-  }
-
-  function handlePaste(e: React.ClipboardEvent) {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pasted) onChange(pasted);
-    e.preventDefault();
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const cleaned = e.target.value.replace(/\D/g, "").slice(0, 6);
+    onChange(cleaned);
   }
 
   return (
-    <div ref={containerRef} className="flex gap-1.5 sm:gap-2 justify-center" onPaste={handlePaste}>
-      {digits.map((d, i) => (
-        <input
-          key={i}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={d}
-          disabled={disabled}
-          onChange={(e) => handleChange(i, e)}
-          onKeyDown={(e) => handleKey(i, e)}
-          onFocus={(e) => e.target.select()}
-          className={`h-12 w-10 sm:h-14 sm:w-11 rounded-xl border-2 bg-muted text-center text-xl sm:text-2xl font-bold outline-none transition-all
-            ${d ? "border-primary text-foreground" : "border-border text-muted-foreground"}
-            ${disabled ? "opacity-50 cursor-not-allowed" : "focus:border-primary focus:ring-2 focus:ring-primary/20"}
-          `}
-        />
-      ))}
+    <div className="flex flex-col items-center gap-2">
+      <input
+        type="text"
+        inputMode="numeric"
+        maxLength={6}
+        value={value}
+        disabled={disabled}
+        onChange={handleChange}
+        placeholder="______"
+        autoFocus
+        className="w-full max-w-xs h-14 rounded-xl border-2 border-border bg-muted text-center text-3xl font-bold tracking-[0.5em] outline-none transition-all placeholder:text-border focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+      />
+      <p className="text-xs text-muted-foreground">{value.length}/6 digits entered</p>
     </div>
   );
 }
