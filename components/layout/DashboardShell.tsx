@@ -8,7 +8,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, ArrowRightLeft, Bell } from "lucide-react";
+import { LogOut, ArrowRightLeft, Bell, Home } from "lucide-react";
 import Link from "next/link";
 import Pusher from "pusher-js";
 import { getNotifications, deleteNotifications } from "@/app/actions/notifications";
@@ -100,6 +100,9 @@ export function DashboardShell({
               </div>
 
               <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
+                  <Link href="/"><Home className="h-4 w-4 mr-1.5" />Home</Link>
+                </Button>
                 <ThemeToggle />
 
                 {/* Notification bell */}
