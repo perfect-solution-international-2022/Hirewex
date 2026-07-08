@@ -158,20 +158,6 @@ export function SiteHeader() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
 
-            {/* Mobile profile icon — only shown when logged in */}
-            {session?.user && (
-              <Link
-                href="/settings/profile"
-                className="md:hidden h-8 w-8 flex items-center justify-center rounded-full border border-border bg-background overflow-hidden shrink-0"
-              >
-                {avatar ? (
-                  <img src={avatar} alt="Profile" className="h-full w-full object-cover" />
-                ) : (
-                  <UserIcon className="h-4 w-4 text-muted-foreground" />
-                )}
-              </Link>
-            )}
-
             {/* Mobile hamburger */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -266,6 +252,20 @@ export function SiteHeader() {
                 </div>
               </SheetContent>
             </Sheet>
+
+            {/* Mobile profile icon — far right, only on mobile when logged in */}
+            {session?.user && (
+              <Link
+                href="/settings/profile"
+                className="md:hidden h-8 w-8 flex items-center justify-center rounded-full border border-border bg-background overflow-hidden shrink-0"
+              >
+                {avatar ? (
+                  <img src={avatar} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <UserIcon className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Link>
+            )}
 
             {session?.user && isApproved && (
               <DropdownMenu
