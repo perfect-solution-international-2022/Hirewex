@@ -135,6 +135,9 @@ export function KycForm() {
   const [isPending, startTransition] = useTransition();
   const [step, setStep] = useState(1);
 
+  // Decorative role selection (cosmetic only — both roles share one account)
+  const [roleSelection, setRoleSelection] = useState<"buyer" | "freelancer" | null>(null);
+
   // Form state
   const [legalName, setLegalName]         = useState("");
   const [dob, setDob]                     = useState("");
@@ -346,6 +349,26 @@ export function KycForm() {
           {/* STEP 1 */}
           {step === 1 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <p className="text-sm font-medium text-foreground mb-2">I am registering as</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["buyer", "freelancer"] as const).map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => setRoleSelection(role)}
+                      className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 py-4 text-sm font-semibold capitalize transition-all
+                        ${roleSelection === role
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border bg-muted/20 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                        }`}
+                    >
+                      {role === "buyer" ? "🛍️" : "💼"}
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <Field label="Full legal name" htmlFor="legalName" required>
                 <Input
                   id="legalName" value={legalName}
