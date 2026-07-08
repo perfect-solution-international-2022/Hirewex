@@ -6,19 +6,117 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Loader2, CheckCheck, ArrowLeft, X, Briefcase, Pencil, Check } from "lucide-react";
+import { Send, Loader2, CheckCheck, ArrowLeft, X, Briefcase, Pencil, Check, Search, MessageSquare } from "lucide-react";
 import { sendMessage, markMessagesAsRead, editMessage } from "@/app/actions/messages";
 import { getServiceContext, getJobContext } from "@/app/actions/chat";
 import Link from "next/link";
+
+interface SidebarChat {
+  id: string;
+  displayName: string;
+  displayEmail: string;
+  avatarUrl: string | null;
+  unreadCount: number;
+}
+
+const getInitials = (name: string) =>
+  name.trim().split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?";
+
+const avatarColor = (name: string) => {
+  const colors = ["bg-red-500","bg-orange-500","bg-amber-500","bg-green-500","bg-emerald-500","bg-teal-500","bg-cyan-500","bg-blue-500","bg-indigo-500","bg-violet-500","bg-purple-500","bg-pink-500"];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
+
+function ChatSidebar({ chats, activeId }: { chats: SidebarChat[]; activeId: string }) {
+  const [search, setSearch] = useState("");
+  const filtered = chats.filter((c) => {
+    const q = search.toLowerCase();
+    return c.displayName.toLowerCase().includes(q) || c.displayEmail.toLowerCase().includes(q);
+  });
+
+  return (
+    <div className="hidden lg:flex flex-col w-72 xl:w-80 shrink-0 border-r border-border/60 bg-card h-full">
+      {/* Sidebar header */}
+      <div className="px-4 pt-4 pb-3 border-b border-border/60">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-foreground">Messages</h2>
+          <Link href="/chat" className="text-xs text-muted-foreground hover:text-foreground transition-colors">All chats</Link>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-8 pl-9 pr-3 rounded-lg border border-input bg-muted/40 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Chat list */}
+      <div className="flex-1 overflow-y-auto divide-y divide-border/30">
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 py-12 px-4 text-center">
+            <MessageSquare className="h-7 w-7 text-muted-foreground/30" />
+            <p className="text-xs text-muted-foreground">No conversations</p>
+          </div>
+        ) : (
+          filtered.map((chat) => {
+            const isActive = chat.id === activeId;
+            const name = chat.displayName || "Unknown";
+            return (
+              <Link
+                key={chat.id}
+                href={`/chat/${chat.id}`}
+                className={`flex items-center gap-3 px-4 py-3 transition-colors relative ${
+                  isActive ? "bg-primary/10" : "hover:bg-muted/40"
+                }`}
+              >
+                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-8 bg-primary rounded-r-full" />}
+                <div className="relative shrink-0">
+                  {chat.avatarUrl ? (
+                    <img src={chat.avatarUrl} alt={name} className="h-10 w-10 rounded-full object-cover border border-border/50" />
+                  ) : (
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold text-white ${avatarColor(name)}`}>
+                      {getInitials(name)}
+                    </div>
+                  )}
+                  {chat.unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground ring-2 ring-card">
+                      {chat.unreadCount > 9 ? "9+" : chat.unreadCount}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm truncate ${chat.unreadCount > 0 ? "font-bold text-foreground" : "font-medium text-foreground"} ${isActive ? "text-primary" : ""}`}>
+                    {name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">{chat.displayEmail}</p>
+                </div>
+              </Link>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function ChatClient({
   conversationId,
   initialMessages,
   otherUser,
+  sidebarChats = [],
+  currentUserId: _currentUserId,
 }: {
   conversationId: string;
   initialMessages: any[];
   otherUser: { name: string; email: string; avatarUrl: string | null };
+  sidebarChats?: SidebarChat[];
+  currentUserId?: string;
 }) {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
@@ -126,7 +224,9 @@ export function ChatClient({
     dateStr ? new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
 
   return (
-    <div className="flex flex-col h-full bg-background border-x border-border/40 overflow-hidden">
+    <div className="flex w-full h-full overflow-hidden">
+      <ChatSidebar chats={sidebarChats} activeId={conversationId} />
+    <div className="flex flex-col flex-1 bg-background border-x border-border/40 overflow-hidden lg:border-l-0">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/60 bg-card/50 shadow-sm z-10">
         <Link href="/chat" className="text-muted-foreground hover:text-foreground transition-colors"><ArrowLeft className="h-5 w-5" /></Link>
@@ -256,6 +356,7 @@ export function ChatClient({
           </Button>
         </form>
       </div>
+    </div>
     </div>
   );
 }
