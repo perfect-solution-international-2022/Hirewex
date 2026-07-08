@@ -13,7 +13,7 @@ export function Logo({
   size?: "sm" | "md" | "lg";
   href?: string;
 }) {
-  const heights = { sm: 28, md: 32, lg: 44 };
+  const heights = { sm: 48, md: 56, lg: 72 };
   const h = heights[size];
 
   const textSizes = { sm: "text-lg", md: "text-xl", lg: "text-3xl" };
