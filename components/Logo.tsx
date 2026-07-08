@@ -18,23 +18,13 @@ export function Logo({
 
   return (
     <Link href={href} className={`inline-flex items-center shrink-0 ${className}`}>
-      {/* Light mode: black logo */}
+      {/* Black logo — inverted to white in dark mode via CSS */}
       <Image
         src="/Logo_black.png"
         alt="Hirewex"
         width={h * 4}
         height={h}
-        className="block dark:hidden object-contain"
-        style={{ height: h, width: "auto" }}
-        priority
-      />
-      {/* Dark mode: white logo */}
-      <Image
-        src="/Logo_white.png"
-        alt="Hirewex"
-        width={h * 4}
-        height={h}
-        className="hidden dark:block object-contain"
+        className="object-contain dark:invert"
         style={{ height: h, width: "auto" }}
         priority
       />
