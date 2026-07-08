@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 export function Logo({
   className = "",
@@ -13,20 +12,17 @@ export function Logo({
   size?: "sm" | "md" | "lg";
   href?: string;
 }) {
-  const heights = { sm: 36, md: 44, lg: 60 };
+  const heights = { sm: 32, md: 40, lg: 56 };
   const h = heights[size];
 
   return (
     <Link href={href} className={`inline-flex items-center shrink-0 ${className}`}>
-      {/* Black logo — inverted to white in dark mode via CSS */}
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src="/Logo_black.png"
         alt="Hirewex"
-        width={h * 4}
-        height={h}
         className="object-contain dark:invert"
         style={{ height: h, width: "auto" }}
-        priority
       />
     </Link>
   );
