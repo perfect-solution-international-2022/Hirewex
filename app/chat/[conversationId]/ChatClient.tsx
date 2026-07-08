@@ -131,8 +131,8 @@ export function ChatClient({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const searchParams = useSearchParams();
-  const serviceId = searchParams.get("serviceId");
-  const jobId = searchParams.get("jobId");
+  const serviceId = searchParams?.get("serviceId");
+  const jobId = searchParams?.get("jobId");
   const [context, setContext] = useState<any>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
