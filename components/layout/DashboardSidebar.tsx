@@ -49,7 +49,7 @@ export function DashboardSidebar({ role }: { role: "admin" | "freelancer" | "buy
               <SidebarMenu>
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.url;
+                  const isActive = pathname === item.url || pathname === item.url.split("?")[0];
                   const badgeCount = badges[item.url] ?? 0;
 
                   return (

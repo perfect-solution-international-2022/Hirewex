@@ -55,7 +55,7 @@ export const freelancerNav = [
     label: "Overview",
     items: [
       { title: "Dashboard", url: "/freelancer", icon: LayoutGrid },
-      { title: "Find Jobs",  url: "/jobs",       icon: Search },
+      { title: "Find Jobs",  url: "/jobs?dashboard=freelancer", icon: Search },
     ],
   },
   {
