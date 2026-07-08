@@ -13,22 +13,26 @@ export function Logo({
   size?: "sm" | "md" | "lg";
   href?: string;
 }) {
-  const heights = { sm: 48, md: 56, lg: 72 };
+  const heights = { sm: 36, md: 44, lg: 60 };
   const h = heights[size];
-
-  const textSizes = { sm: "text-lg", md: "text-xl", lg: "text-3xl" };
 
   return (
     <Link href={href} className={`inline-flex items-center shrink-0 ${className}`}>
-      {/* Light mode: text logo */}
-      <span className={`block dark:hidden font-bold tracking-tight text-foreground ${textSizes[size]}`}>
-        Hirewex
-      </span>
-      {/* Dark mode: image logo (white transparent) */}
+      {/* Light mode: black logo */}
       <Image
-        src="/Logo_White.png"
+        src="/Logo_black.png"
         alt="Hirewex"
-        width={h * 3}
+        width={h * 4}
+        height={h}
+        className="block dark:hidden object-contain"
+        style={{ height: h, width: "auto" }}
+        priority
+      />
+      {/* Dark mode: white logo */}
+      <Image
+        src="/Logo_white.png"
+        alt="Hirewex"
+        width={h * 4}
         height={h}
         className="hidden dark:block object-contain"
         style={{ height: h, width: "auto" }}
