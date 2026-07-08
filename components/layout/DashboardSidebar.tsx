@@ -10,6 +10,7 @@ import {
   SidebarMenuItem, SidebarHeader, SidebarFooter
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/Logo";
+import { Home } from "lucide-react";
 
 export function DashboardSidebar({ role }: { role: "admin" | "freelancer" | "buyer" }) {
   const pathname = usePathname();
@@ -76,8 +77,15 @@ export function DashboardSidebar({ role }: { role: "admin" | "freelancer" | "buy
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="p-4 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Hirewex
+      <SidebarFooter className="p-4 space-y-3">
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <Home className="h-4 w-4 shrink-0" />
+          Go to Home
+        </Link>
+        <p className="text-xs text-muted-foreground px-2">© {new Date().getFullYear()} Hirewex</p>
       </SidebarFooter>
     </Sidebar>
   );
