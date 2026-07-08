@@ -14,6 +14,7 @@ export const buyerNav = [
   {
     label: "Overview",
     items: [
+      { title: "Home",         url: "/",           icon: Globe },
       { title: "Dashboard",    url: "/dashboard",  icon: LayoutGrid },
       { title: "Find Service", url: "/service",    icon: Search },
     ],
@@ -54,8 +55,9 @@ export const freelancerNav = [
   {
     label: "Overview",
     items: [
-      { title: "Dashboard", url: "/freelancer", icon: LayoutGrid },
-      { title: "Find Jobs",  url: "/jobs?dashboard=freelancer", icon: Search },
+      { title: "Home",      url: "/",                          icon: Globe },
+      { title: "Dashboard", url: "/freelancer",                icon: LayoutGrid },
+      { title: "Find Jobs", url: "/jobs?dashboard=freelancer", icon: Search },
     ],
   },
   {
@@ -94,6 +96,7 @@ export const freelancerNav = [
 
 export const adminNav = [
   { label: "Overview", items: [
+    { title: "Home",      url: "/",      icon: Globe },
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   ]},
   { label: "Users", items: [
