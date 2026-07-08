@@ -378,7 +378,7 @@ export function KycForm() {
                 <Input
                   id="country" value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  placeholder="Sri Lanka" disabled={isPending}
+                  placeholder="USA" disabled={isPending}
                 />
               </Field>
               <div className="md:col-span-2">

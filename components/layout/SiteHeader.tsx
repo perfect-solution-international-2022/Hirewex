@@ -9,7 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSession, signOut } from "next-auth/react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogOut, LayoutDashboard, User as UserIcon, Briefcase, ChevronDown, MessageCircle, ShieldAlert, Users, Bell, PartyPopper, CheckCircle2, Menu, X } from "lucide-react";
+import { LogOut, LayoutDashboard, User as UserIcon, Briefcase, ChevronDown, MessageCircle, ShieldAlert, Users, Bell, PartyPopper, CheckCircle2, Menu, X, ShoppingBag } from "lucide-react";
 import { getProfileData } from "@/app/actions/profile";
 import { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotifications } from "@/app/actions/notifications";
 import { toast } from "sonner";
@@ -135,11 +135,42 @@ export function SiteHeader() {
                   {n.label}
                 </Link>
               ))}
+              {session?.user && isApproved && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground focus:outline-none">
+                      Dashboard <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-52">
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard"><ShoppingBag className="mr-2 h-4 w-4" />Buyer Dashboard</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/freelancer"><Briefcase className="mr-2 h-4 w-4" />Freelancer Dashboard</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </nav>
           </div>
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
+
+            {/* Mobile profile icon — only shown when logged in */}
+            {session?.user && (
+              <Link
+                href="/settings/profile"
+                className="md:hidden h-8 w-8 flex items-center justify-center rounded-full border border-border bg-background overflow-hidden shrink-0"
+              >
+                {avatar ? (
+                  <img src={avatar} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <UserIcon className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Link>
+            )}
 
             {/* Mobile hamburger */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
