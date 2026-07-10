@@ -56,15 +56,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const userId = user?.id || token?.sub; 
 
       if (session.user && userId) {
-        // Fixed: userRoles.userId (camelCase)
-        const userRolesData = await db.select({ role: userRoles.role })
-          .from(userRoles)
-          .where(eq(userRoles.userId, userId as string));
-        
-        let mappedRoles = userRolesData.map((r) => r.role);
+        let mappedRoles: string[] = ["buyer"];
+        try {
+          const userRolesData = await db.select({ role: userRoles.role })
+            .from(userRoles)
+            .where(eq(userRoles.userId, userId as string));
 
-        if (mappedRoles.length === 0) {
-          mappedRoles = ["buyer"]; 
+          if (userRolesData.length > 0) {
+            mappedRoles = userRolesData.map((r) => r.role);
+          }
+        } catch {
+          // user_roles table may not exist in production yet — default to buyer
         }
 
         // --- NEW: Fetch live KYC Status ---

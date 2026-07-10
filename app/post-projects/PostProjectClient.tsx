@@ -65,8 +65,16 @@ export default function PostProjectClient({ dbCategories }: { dbCategories: Cate
     }
   }, [status, router]);
 
-  if (status === "loading" || status === "unauthenticated") {
-    return null; 
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary" />
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return null;
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

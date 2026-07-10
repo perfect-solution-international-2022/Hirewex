@@ -38,7 +38,7 @@ export const buyerNav = [
   {
     label: "Account",
     items: [
-      { title: "Messages", url: "/chat",             icon: MessageSquare },
+      { title: "Chat", url: "/chat",             icon: MessageSquare },
       { title: "Profile",  url: "/settings/profile", icon: User },
     ],
   },
@@ -79,7 +79,7 @@ export const freelancerNav = [
   {
     label: "Account",
     items: [
-      { title: "Messages", url: "/chat",                  icon: MessageSquare },
+      { title: "Chat", url: "/chat",                  icon: MessageSquare },
       { title: "Reviews",  url: "/freelancer/reviews",   icon: Star },
       { title: "Profile",  url: "/settings/profile",     icon: User },
       { title: "Settings", url: "/freelancer/settings",  icon: Settings },
