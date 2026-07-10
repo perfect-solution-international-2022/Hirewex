@@ -5,7 +5,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { users } from "@/drizzle/schema";
+import { users, userRoles } from "@/drizzle/schema";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
@@ -56,8 +56,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const userId = user?.id || token?.sub; 
 
       if (session.user && userId) {
-        // Both buyer and freelancer are the same account — always grant both roles
-        const mappedRoles = ["buyer", "freelancer"];
+        // Buyer and freelancer are the same account — always grant both.
+        // Only check the DB to detect admin users.
+        let mappedRoles = ["buyer", "freelancer"];
+        try {
+          const adminCheck = await db
+            .select({ role: userRoles.role })
+            .from(userRoles)
+            .where(eq(userRoles.userId, userId as string))
+            .limit(5);
+          if (adminCheck.some((r) => r.role === "admin")) {
+            mappedRoles = ["admin"];
+          }
+        } catch {
+          // user_roles table missing — no admin access
+        }
 
         // Fetch live KYC Status
         const userData = await db.select({ kycStatus: users.kycStatus })
