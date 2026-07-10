@@ -3,9 +3,9 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import bcrypt from "bcryptjs";
-import { db } from "@/lib/db"; 
+import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { users, userRoles } from "@/drizzle/schema";
+import { users } from "@/drizzle/schema";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
@@ -56,20 +56,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const userId = user?.id || token?.sub; 
 
       if (session.user && userId) {
-        let mappedRoles: string[] = ["buyer"];
-        try {
-          const userRolesData = await db.select({ role: userRoles.role })
-            .from(userRoles)
-            .where(eq(userRoles.userId, userId as string));
+        // Both buyer and freelancer are the same account — always grant both roles
+        const mappedRoles = ["buyer", "freelancer"];
 
-          if (userRolesData.length > 0) {
-            mappedRoles = userRolesData.map((r) => r.role);
-          }
-        } catch {
-          // user_roles table may not exist in production yet — default to buyer
-        }
-
-        // --- NEW: Fetch live KYC Status ---
+        // Fetch live KYC Status
         const userData = await db.select({ kycStatus: users.kycStatus })
           .from(users)
           .where(eq(users.id, userId as string))
