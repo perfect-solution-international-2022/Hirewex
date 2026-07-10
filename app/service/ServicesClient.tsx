@@ -13,11 +13,11 @@ import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 
 export function ServicesClient({ initialServices, currentUserId }: { initialServices: any[], currentUserId?: string }) {
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
+  const [searchQuery, setSearchQuery] = useState(searchParams?.get("q") ?? "");
 
   // Sync if the URL ?q= param changes (e.g. browser back/forward)
   useEffect(() => {
-    const q = searchParams.get("q") ?? "";
+    const q = searchParams?.get("q") ?? "";
     setSearchQuery(q);
   }, [searchParams]);
   const [minPrice, setMinPrice] = useState("");
