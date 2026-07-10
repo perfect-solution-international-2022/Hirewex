@@ -35,7 +35,7 @@ function timeAgo(dateString: string) {
 
 export function SiteHeader() {
   const { data: session } = useSession();
-  const pathname = usePathname(); 
+  const pathname = usePathname();
   const [unreadGlobal, setUnreadGlobal] = useState(0);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
 
@@ -45,9 +45,31 @@ export function SiteHeader() {
   const [isLoadingNotifs, setIsLoadingNotifs] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [hasViewedThisOpen, setHasViewedThisOpen] = useState(false);
-  
+
+  // --- SELLING MODE (persisted in localStorage) ---
+  const [isSellingMode, setIsSellingMode] = useState(false);
+
+  useEffect(() => {
+    // If currently on a freelancer dashboard page, force selling mode on
+    if (pathname?.startsWith("/freelancer")) {
+      localStorage.setItem("hirewex_mode", "selling");
+      setIsSellingMode(true);
+    } else {
+      setIsSellingMode(localStorage.getItem("hirewex_mode") === "selling");
+    }
+  }, [pathname]);
+
+  const switchToSelling = () => {
+    localStorage.setItem("hirewex_mode", "selling");
+    setIsSellingMode(true);
+  };
+
+  const switchToBuying = () => {
+    localStorage.setItem("hirewex_mode", "buying");
+    setIsSellingMode(false);
+  };
+
   const roles = session?.user?.roles || [];
-  const isSellingMode = pathname?.startsWith("/freelancer") ?? false;
   const isAdmin = roles.includes("admin");
   const logoHref = isSellingMode ? "/freelancer" : "/";
 
@@ -136,21 +158,12 @@ export function SiteHeader() {
                 </Link>
               ))}
               {session?.user && isApproved && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground focus:outline-none">
-                      Dashboard <ChevronDown className="h-3.5 w-3.5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-52">
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard"><ShoppingBag className="mr-2 h-4 w-4" />Buyer Dashboard</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/freelancer"><Briefcase className="mr-2 h-4 w-4" />Freelancer Dashboard</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Link
+                  href={isSellingMode ? "/freelancer" : "/dashboard"}
+                  className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                >
+                  Dashboard
+                </Link>
               )}
             </nav>
           </div>
@@ -185,12 +198,12 @@ export function SiteHeader() {
                   <div className="flex flex-col gap-2 px-4 py-4 border-b border-border/60">
                     {session?.user && isApproved && (
                       isSellingMode ? (
-                        <Button variant="outline" size="sm" asChild className="w-full justify-start" onClick={() => setMobileOpen(false)}>
-                          <Link href="/">Switch to buying</Link>
+                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { switchToBuying(); setMobileOpen(false); window.location.href = "/"; }}>
+                          Switch to buying
                         </Button>
                       ) : (
-                        <Button variant="outline" size="sm" asChild className="w-full justify-start" onClick={() => setMobileOpen(false)}>
-                          <Link href="/freelancer">Switch to selling</Link>
+                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { switchToSelling(); setMobileOpen(false); window.location.href = "/freelancer"; }}>
+                          Switch to selling
                         </Button>
                       )
                     )}
@@ -209,12 +222,15 @@ export function SiteHeader() {
                         <Link href="/chat" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
                           <MessageCircle className="h-4 w-4" /> Chat
                         </Link>
-                        <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
-                          <Briefcase className="h-4 w-4" /> Buyer Dashboard
-                        </Link>
-                        <Link href="/freelancer" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
-                          <UserIcon className="h-4 w-4" /> Freelancer Dashboard
-                        </Link>
+                        {isSellingMode ? (
+                          <Link href="/freelancer" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
+                            <Briefcase className="h-4 w-4" /> Freelancer Dashboard
+                          </Link>
+                        ) : (
+                          <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
+                            <ShoppingBag className="h-4 w-4" /> Buyer Dashboard
+                          </Link>
+                        )}
                         <button
                           onClick={() => { setMobileOpen(false); setShowSignOutModal(true); }}
                           className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 text-left"
@@ -356,12 +372,12 @@ export function SiteHeader() {
               isApproved ? (
                 <>
                   {isSellingMode ? (
-                    <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex text-muted-foreground hover:bg-transparent hover:text-foreground">
-                      <Link href="/">Switch to buying</Link> 
+                    <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:bg-transparent hover:text-foreground" onClick={() => { switchToBuying(); window.location.href = "/"; }}>
+                      Switch to buying
                     </Button>
                   ) : (
-                    <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex text-muted-foreground hover:bg-transparent hover:text-foreground">
-                      <Link href="/freelancer">Switch to selling</Link>
+                    <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:bg-transparent hover:text-foreground" onClick={() => { switchToSelling(); window.location.href = "/freelancer"; }}>
+                      Switch to selling
                     </Button>
                   )}
 
@@ -414,27 +430,17 @@ export function SiteHeader() {
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
-                      
-                      {/* BUYER SECTION */}
-                      <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Buyer
-                      </div>
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard"><Briefcase className="mr-2 h-4 w-4" />Buyer Dashboard</Link>
-                      </DropdownMenuItem>
-                    
-                      
-                      
-                      <DropdownMenuSeparator />
-                      
-                      {/* FREELANCER SECTION */}
-                      <div className="px-2 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Freelancer
-                      </div>
-                      <DropdownMenuItem asChild>
-                        <Link href="/freelancer"><UserIcon className="mr-2 h-4 w-4" />Freelancer Dashboard</Link>
-                      </DropdownMenuItem>
-                      
+
+                      {isSellingMode ? (
+                        <DropdownMenuItem asChild>
+                          <Link href="/freelancer"><Briefcase className="mr-2 h-4 w-4" />Freelancer Dashboard</Link>
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard"><ShoppingBag className="mr-2 h-4 w-4" />Buyer Dashboard</Link>
+                        </DropdownMenuItem>
+                      )}
+
                       <DropdownMenuSeparator />
                       
                       <DropdownMenuItem onClick={() => setShowSignOutModal(true)} className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer">
