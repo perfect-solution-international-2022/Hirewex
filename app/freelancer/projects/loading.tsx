@@ -2,7 +2,6 @@ function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className ?? ""}`} />;
 }
 
-const TABS = ["ALL", "ACTIVE", "PENDING APPROVAL", "REQUIRES MODIFICATION", "DRAFT", "DENIED", "PAUSED"];
 
 export default function Loading() {
   return (
@@ -18,9 +17,13 @@ export default function Loading() {
 
       {/* Tabs */}
       <div className="flex gap-2 flex-wrap">
-        {TABS.map((t) => (
-          <Skeleton key={t} className="h-8 rounded-full" style={{ width: `${t.length * 8 + 24}px` }} />
-        ))}
+        <Skeleton className="h-8 w-12 rounded-full" />
+        <Skeleton className="h-8 w-16 rounded-full" />
+        <Skeleton className="h-8 w-36 rounded-full" />
+        <Skeleton className="h-8 w-52 rounded-full" />
+        <Skeleton className="h-8 w-16 rounded-full" />
+        <Skeleton className="h-8 w-16 rounded-full" />
+        <Skeleton className="h-8 w-20 rounded-full" />
       </div>
 
       {/* Service cards grid */}
