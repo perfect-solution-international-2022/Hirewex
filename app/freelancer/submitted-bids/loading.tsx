@@ -1,5 +1,5 @@
 function Sk({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-muted ${className ?? ""}`} />;
+  return <div className={`skeleton ${className ?? ""}`} />;
 }
 
 export default function Loading() {
@@ -52,3 +52,4 @@ export default function Loading() {
     </div>
   );
 }
+
