@@ -268,6 +268,17 @@ export function SiteHeader() {
             )}
 
             {session?.user && isApproved && (
+              <Link href="/chat" className="relative h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors">
+                <MessageCircle className="h-4.5 w-4.5 text-muted-foreground" />
+                {unreadGlobal > 0 && (
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground font-bold">
+                    {unreadGlobal > 9 ? "9+" : unreadGlobal}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {session?.user && isApproved && (
               <DropdownMenu
                 open={bellOpen}
                 onOpenChange={(open) => {

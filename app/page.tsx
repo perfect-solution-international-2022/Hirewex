@@ -45,14 +45,14 @@ import {
    Static data
 ───────────────────────────────────────────────────────────────── */
 const categories = [
-  { name: "Web Development",   slug: "web-development",      icon: Code,       from: "from-blue-500",   to: "to-indigo-600" },
-  { name: "Mobile Apps",       slug: "mobile-development",   icon: Smartphone, from: "from-violet-500", to: "to-purple-600" },
-  { name: "Design & Creative", slug: "design-creative",      icon: Palette,    from: "from-pink-500",   to: "to-rose-600" },
-  { name: "Writing",           slug: "writing-translation",  icon: PenLine,    from: "from-emerald-500",to: "to-teal-600" },
-  { name: "Marketing & SEO",   slug: "marketing-seo",        icon: TrendingUp, from: "from-orange-500", to: "to-amber-600" },
-  { name: "Video & Animation", slug: "video-animation",      icon: Video,      from: "from-red-500",    to: "to-rose-600" },
-  { name: "Data & Analytics",  slug: "data-analytics",       icon: BarChart3,  from: "from-sky-500",    to: "to-blue-600" },
-  { name: "AI & ML",           slug: "ai-ml",                icon: Brain,      from: "from-purple-500", to: "to-violet-600" },
+  { name: "Web Development",   slug: "web-development",      icon: Code       },
+  { name: "Mobile Apps",       slug: "mobile-development",   icon: Smartphone },
+  { name: "Design & Creative", slug: "design-creative",      icon: Palette    },
+  { name: "Writing",           slug: "writing-translation",  icon: PenLine    },
+  { name: "Marketing & SEO",   slug: "marketing-seo",        icon: TrendingUp },
+  { name: "Video & Animation", slug: "video-animation",      icon: Video      },
+  { name: "Data & Analytics",  slug: "data-analytics",       icon: BarChart3  },
+  { name: "AI & ML",           slug: "ai-ml",                icon: Brain      },
 ];
 
 const steps = [
@@ -304,14 +304,13 @@ export default async function HomePage() {
             return (
               <FadeIn key={c.slug} delay={i * 50}>
                 <Link href={`/service?category=${c.slug}`}
-                  className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 md:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] hover:border-transparent block">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${c.from} ${c.to} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                  className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 md:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:border-border/80 block">
                   <div className="relative z-10">
-                    <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${c.from} ${c.to} text-white shadow-sm mb-4 transition-transform duration-300 group-hover:scale-110`}>
-                      <Icon className="h-5 w-5" />
+                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-foreground/8 border border-border mb-4">
+                      <Icon className="h-5 w-5 text-foreground" />
                     </div>
-                    <h3 className="font-bold text-sm md:text-base text-foreground group-hover:text-white transition-colors leading-tight">{c.name}</h3>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-white/80 transition-colors">
+                    <h3 className="font-bold text-sm md:text-base text-foreground leading-tight">{c.name}</h3>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
                       Explore <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                     </p>
                   </div>
