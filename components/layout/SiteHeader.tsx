@@ -66,11 +66,13 @@ export function SiteHeader() {
   const switchToSelling = () => {
     localStorage.setItem("hirewex_mode", "selling");
     setIsSellingMode(true);
+    window.location.href = "/freelancer";
   };
 
   const switchToBuying = () => {
     localStorage.setItem("hirewex_mode", "buying");
     setIsSellingMode(false);
+    window.location.href = "/dashboard";
   };
 
   const roles = session?.user?.roles || [];
@@ -202,11 +204,11 @@ export function SiteHeader() {
                   <div className="flex flex-col gap-2 px-4 py-4 border-b border-border/60">
                     {session?.user && isApproved && (
                       isSellingMode ? (
-                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { switchToBuying(); setMobileOpen(false); window.location.href = "/"; }}>
+                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setMobileOpen(false); switchToBuying(); }}>
                           Switch to buying
                         </Button>
                       ) : (
-                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { switchToSelling(); setMobileOpen(false); window.location.href = "/freelancer"; }}>
+                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setMobileOpen(false); switchToSelling(); }}>
                           Switch to selling
                         </Button>
                       )
@@ -376,11 +378,11 @@ export function SiteHeader() {
               isApproved ? (
                 <>
                   {isSellingMode ? (
-                    <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:bg-transparent hover:text-foreground" onClick={() => { switchToBuying(); window.location.href = "/"; }}>
+                    <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:bg-transparent hover:text-foreground" onClick={switchToBuying}>
                       Switch to buying
                     </Button>
                   ) : (
-                    <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:bg-transparent hover:text-foreground" onClick={() => { switchToSelling(); window.location.href = "/freelancer"; }}>
+                    <Button variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:bg-transparent hover:text-foreground" onClick={switchToSelling}>
                       Switch to selling
                     </Button>
                   )}
