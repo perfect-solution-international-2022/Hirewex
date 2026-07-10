@@ -6,100 +6,74 @@ import { eq, or, and, ne, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import { auth } from "@/auth";
 import { InboxClient } from "./InboxClient";
-
-// 1. Import your header and footer
-import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { MessageSquare } from "lucide-react";
 
 export default async function ChatListPage() {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return (
-      // Added layout wrapper to the logged-out state as well
       <div className="flex min-h-screen flex-col bg-background">
         <SiteHeader />
         <div className="flex flex-1 items-center justify-center">
           <p className="text-muted-foreground">Please log in to view your messages.</p>
         </div>
-        <SiteFooter />
       </div>
     );
   }
 
   const currentUserId = session.user.id;
-
-  // 1. Create table aliases to join the users table twice (for sender and recipient)
   const userA_table = alias(users, "userA_table");
   const userB_table = alias(users, "userB_table");
 
-  // 2. Fetch all conversations involving the current logged-in user
   const rawChats = await db
-    .select({
-      id: conversations.id,
-      userA: userA_table,
-      userB: userB_table,
-    })
+    .select({ id: conversations.id, userA: userA_table, userB: userB_table })
     .from(conversations)
     .leftJoin(userA_table, eq(conversations.userA, userA_table.id))
     .leftJoin(userB_table, eq(conversations.userB, userB_table.id))
-    .where(
-      or(
-        eq(conversations.userA, currentUserId),
-        eq(conversations.userB, currentUserId)
-      )
-    );
+    .where(or(eq(conversations.userA, currentUserId), eq(conversations.userB, currentUserId)));
 
-  // 3. Process each chat to find the other user's profile info and get the unread count
   const processedChats = await Promise.all(
     rawChats.map(async (chat) => {
-      // Determine which participant is the other user
       const otherUser = chat.userA?.id === currentUserId ? chat.userB : chat.userA;
-      
-      // Also checking displayName just in case!
       const finalName = otherUser?.displayName || otherUser?.name || "Unknown User";
-      const displayEmail = otherUser?.email || "No email available";
-      
-      // FIX: Check both avatarUrl AND image (where OAuth pictures are stored)
-      const finalAvatar = otherUser?.avatarUrl || otherUser?.image || null;
-      
-      // Count unread messages in this conversation sent by the other user
       const unreadMsgs = await db
         .select({ id: messages.id })
         .from(messages)
-        .where(
-          and(
-            eq(messages.conversationId, chat.id),
-            ne(messages.senderId, currentUserId), 
-            isNull(messages.readAt) // Uses the fixed camelCase property name            
-          )
-        );
-
+        .where(and(eq(messages.conversationId, chat.id), ne(messages.senderId, currentUserId), isNull(messages.readAt)));
       return {
         id: chat.id,
-        // PASS BOTH KEYS: This bulletproofs it against the InboxClient
         name: finalName,
         displayName: finalName,
-        displayEmail: displayEmail,
-        avatarUrl: finalAvatar, 
-        profilePic: finalAvatar,
+        displayEmail: otherUser?.email || "",
+        avatarUrl: otherUser?.avatarUrl || otherUser?.image || null,
+        profilePic: otherUser?.avatarUrl || otherUser?.image || null,
         unreadCount: unreadMsgs.length,
       };
     })
   );
 
   return (
-    // 2. Wrapped the inbox in the layout structure
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col bg-background overflow-hidden">
       <SiteHeader />
-      
-      <main className="container mx-auto p-6 max-w-4xl flex-1 flex flex-col h-full">
-        <InboxClient 
-          initialChats={processedChats} 
-          currentUserId={currentUserId} 
-        />
-      </main>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left: conversation list */}
+        <div className="w-full max-w-xs xl:max-w-sm shrink-0 border-r border-border/60 flex flex-col overflow-hidden">
+          <InboxClient initialChats={processedChats} currentUserId={currentUserId} />
+        </div>
 
-      <SiteFooter />
+        {/* Right: empty state */}
+        <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 bg-muted/10">
+          <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+            <MessageSquare className="h-9 w-9 text-muted-foreground/30" />
+          </div>
+          <div className="text-center">
+            <p className="font-semibold text-foreground">Your messages</p>
+            <p className="text-sm text-muted-foreground mt-1">Select a conversation to start chatting</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

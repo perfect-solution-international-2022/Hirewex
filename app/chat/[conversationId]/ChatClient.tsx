@@ -42,7 +42,6 @@ function ChatSidebar({ chats, activeId }: { chats: SidebarChat[]; activeId: stri
       <div className="px-4 pt-4 pb-3 border-b border-border/60">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold text-foreground">Messages</h2>
-          <Link href="/chat" className="text-xs text-muted-foreground hover:text-foreground transition-colors">All chats</Link>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />

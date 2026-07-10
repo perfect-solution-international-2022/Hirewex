@@ -137,21 +137,20 @@ export function InboxClient({
   };
 
   return (
-    <div className="flex flex-col h-full bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+    <div className="flex flex-col h-full bg-card overflow-hidden">
 
       {/* Header */}
-      <div className="px-5 pt-5 pb-4 border-b border-border/60">
-        <div className="flex items-center justify-between mb-4">
+      <div className="px-4 pt-4 pb-3 border-b border-border/60">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-foreground">Inbox</h2>
+            <h2 className="text-base font-bold text-foreground">Messages</h2>
             {totalUnread > 0 && (
               <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
                 {totalUnread}
               </span>
             )}
           </div>
-          
-          <span className="text-xs text-muted-foreground">{chats.length} conversation{chats.length !== 1 ? "s" : ""}</span>
+          <span className="text-xs text-muted-foreground">{chats.length} chat{chats.length !== 1 ? "s" : ""}</span>
         </div>
 
         {/* Search */}
