@@ -1,36 +1,33 @@
 import Link from "next/link";
+import { SiteHeader, SiteFooter } from "@/components/layout/SiteHeader";
 import { Button } from "@/components/ui/button";
-import { Ghost, ArrowLeft } from "lucide-react";
+import { FileQuestion } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-center px-4 text-center">
-      <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-muted">
-        <Ghost className="h-12 w-12 text-muted-foreground" />
-      </div>
-      
-      <h1 className="mb-2 text-4xl font-bold tracking-tight text-foreground">
-        Page not found
-      </h1>
-      
-      <p className="mb-8 max-w-sm text-muted-foreground">
-        Sorry, we couldn&apos;t find the page you&apos;re looking for. It might have been moved or doesn&apos;t exist.
-      </p>
-
-      <div className="flex gap-3">
-        <Button asChild variant="outline">
-          <Link href="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Link>
-        </Button>
-        
-        <Button asChild>
-          <Link href="/service">
-            Find Freelancers
-          </Link>
-        </Button>
-      </div>
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="flex flex-1 items-center justify-center px-4 py-24">
+        <div className="flex flex-col items-center text-center max-w-md">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted border border-border">
+            <FileQuestion className="h-9 w-9 text-muted-foreground" />
+          </div>
+          <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-3">404</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground mb-3">Page not found</h1>
+          <p className="text-muted-foreground mb-8">
+            The page you're looking for doesn't exist or may have been moved.
+          </p>
+          <div className="flex gap-3">
+            <Button asChild>
+              <Link href="/">Go home</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/service">Browse services</Link>
+            </Button>
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
     </div>
   );
 }

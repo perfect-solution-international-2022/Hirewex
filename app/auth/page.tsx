@@ -175,12 +175,20 @@ function AuthContent() {
   const { data: session, status } = useSession();
   const loading = status === "loading";
 
-  const [tab, setTab] = useState<"signin" | "signup">(
-    modeParam === "signup" ? "signup" : "signin"
-  );
-  const [role, setRole] = useState<"freelancer" | "buyer">(
-    roleParam === "buyer" ? "buyer" : "freelancer"
-  );
+  const [tab, setTab] = useState<"signin" | "signup">(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("mode");
+      return p === "signup" ? "signup" : "signin";
+    }
+    return modeParam === "signup" ? "signup" : "signin";
+  });
+  const [role, setRole] = useState<"freelancer" | "buyer">(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("role");
+      return p === "buyer" ? "buyer" : "freelancer";
+    }
+    return roleParam === "buyer" ? "buyer" : "freelancer";
+  });
 
   const [email, setEmail]               = useState("");
   const [password, setPassword]         = useState("");
