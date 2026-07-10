@@ -47,10 +47,14 @@ export function SiteHeader() {
   const [hasViewedThisOpen, setHasViewedThisOpen] = useState(false);
 
   // --- SELLING MODE (persisted in localStorage) ---
-  const [isSellingMode, setIsSellingMode] = useState(false);
+  // Initialise lazily so the correct value is available on first render (no flicker)
+  const [isSellingMode, setIsSellingMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    if (window.location.pathname.startsWith("/freelancer")) return true;
+    return localStorage.getItem("hirewex_mode") === "selling";
+  });
 
   useEffect(() => {
-    // If currently on a freelancer dashboard page, force selling mode on
     if (pathname?.startsWith("/freelancer")) {
       localStorage.setItem("hirewex_mode", "selling");
       setIsSellingMode(true);

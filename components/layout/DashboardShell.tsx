@@ -87,12 +87,12 @@ export function DashboardShell({
                 {role !== "admin" && (
                   <div className="hidden md:flex ml-4 border-l border-border/60 pl-4">
                     {role === "freelancer" ? (
-                      <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:bg-transparent hover:text-foreground">
-                        <Link href="/"><ArrowRightLeft className="mr-2 h-3.5 w-3.5" />Switch to Client</Link>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:bg-transparent hover:text-foreground" onClick={() => { localStorage.setItem("hirewex_mode", "buying"); window.location.href = "/"; }}>
+                        <ArrowRightLeft className="mr-2 h-3.5 w-3.5" />Switch to Buying
                       </Button>
                     ) : (
-                      <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:bg-transparent hover:text-foreground">
-                        <Link href="/freelancer"><ArrowRightLeft className="mr-2 h-3.5 w-3.5" />Switch to Freelancer</Link>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:bg-transparent hover:text-foreground" onClick={() => { localStorage.setItem("hirewex_mode", "selling"); window.location.href = "/freelancer"; }}>
+                        <ArrowRightLeft className="mr-2 h-3.5 w-3.5" />Switch to Selling
                       </Button>
                     )}
                   </div>
