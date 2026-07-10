@@ -1,52 +1,58 @@
-function Skeleton({ className }: { className?: string }) {
+function Sk({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-md bg-muted ${className ?? ""}`} />;
 }
 
-
 export default function Loading() {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-4 w-56" />
+          <Sk className="h-9 w-36" />
+          <Sk className="h-4 w-56" />
         </div>
-        <Skeleton className="h-9 w-36 rounded-lg" />
+        <div className="flex items-center gap-3">
+          <Sk className="h-4 w-40" />
+          <Sk className="h-6 w-11 rounded-full" />
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
-        <Skeleton className="h-8 w-12 rounded-full" />
-        <Skeleton className="h-8 w-16 rounded-full" />
-        <Skeleton className="h-8 w-36 rounded-full" />
-        <Skeleton className="h-8 w-52 rounded-full" />
-        <Skeleton className="h-8 w-16 rounded-full" />
-        <Skeleton className="h-8 w-16 rounded-full" />
-        <Skeleton className="h-8 w-20 rounded-full" />
+      {/* Tabs + Create button */}
+      <div className="flex items-center justify-between border-b border-border pb-px gap-4">
+        <div className="flex gap-1 overflow-x-auto">
+          <Sk className="h-10 w-12 rounded-none shrink-0" />
+          <Sk className="h-10 w-14 rounded-none shrink-0" />
+          <Sk className="h-10 w-20 rounded-none shrink-0" />
+          <Sk className="h-10 w-36 rounded-none shrink-0" />
+          <Sk className="h-10 w-14 rounded-none shrink-0" />
+          <Sk className="h-10 w-14 rounded-none shrink-0" />
+          <Sk className="h-10 w-16 rounded-none shrink-0" />
+        </div>
+        <Sk className="h-9 w-44 rounded-lg shrink-0" />
       </div>
 
-      {/* Service cards grid */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
-            <Skeleton className="aspect-video w-full rounded-none" />
-            <div className="p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <Skeleton className="h-4 flex-1" />
-                <Skeleton className="h-5 w-16 rounded-full shrink-0" />
+      {/* Table card */}
+      <div className="rounded-xl border border-border overflow-hidden">
+        <div className="px-6 py-4 border-b border-border bg-muted/10 flex items-center justify-between">
+          <Sk className="h-4 w-32" />
+          <Sk className="h-8 w-32 rounded-lg" />
+        </div>
+        <div className="divide-y divide-border">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="px-6 py-4 flex items-center gap-4">
+              <Sk className="h-10 w-16 rounded-md shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <Sk className="h-4 w-56" />
+                <Sk className="h-3 w-28" />
               </div>
-              <Skeleton className="h-4 w-3/4" />
-              <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                <Skeleton className="h-4 w-20" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-7 w-7 rounded-md" />
-                  <Skeleton className="h-7 w-7 rounded-md" />
-                </div>
+              <Sk className="h-5 w-24 rounded-full shrink-0" />
+              <div className="flex gap-2 shrink-0">
+                <Sk className="h-8 w-16 rounded-lg" />
+                <Sk className="h-8 w-8 rounded-lg" />
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
